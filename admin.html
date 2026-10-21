@@ -163,18 +163,18 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
     <section id="pMarket" class="hidden">
       <div id="chartContainer"></div>
       <div class="card">
-        <h3 style="font-size:.95rem;margin-bottom:12px">⚙️ Parameter Mekanisme Harga</h3>
+        <h3 style="font-size:.95rem;margin-bottom:12px">⚙️ Atur Harga CAZO</h3>
         <div class="frow">
-          <label class="flabel">Harga CAZO Saat Ini (Rp)</label>
+          <label class="flabel">Harga Saat Ini (Rp)</label>
           <input class="finput" id="cfgPrice" type="number" step="1" placeholder="500">
-          <p style="font-size:.72rem;color:var(--muted);margin-top:6px">Ubah harga manual jika diperlukan. Perubahan dibatasi 5%-50% per operasi oleh Security Rules.</p>
+          <p style="font-size:.72rem;color:var(--muted);margin-top:6px">Admin dapat mengubah harga tanpa batas 5%. User biasa dibatasi ±5%.</p>
         </div>
         <button class="btn btn-primary" onclick="savePrice()">💾 Simpan Harga</button>
         <p id="priceMsg" style="margin-top:10px;font-size:.8rem;color:var(--muted)"></p>
       </div>
       <div class="card">
         <h3 style="font-size:.95rem;margin-bottom:12px">🔄 Reset Volume (Hati-hati)</h3>
-        <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Mereset volume beli/jual ke 0. Tidak menghapus transaksi. Gunakan hanya jika statistik tidak akurat.</p>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Mereset volume beli/jual ke 0. Tidak menghapus transaksi.</p>
         <button class="btn btn-danger" onclick="resetVolumes()">🔄 Reset Volume</button>
       </div>
     </section>
@@ -215,11 +215,23 @@ const fmtTime = t => t ? new Date(t).toLocaleString('id-ID',{day:'2-digit',month
 
 let user = null, deposits = [], users = [], txs = [], wallets = {}, lastPublicTxs = [], chart, candleS;
 
+// === Helper: tulis log aman ===
+async function writeLog(action, targetId, extra = {}) {
+  const logRef = push(ref(db, 'adminLogs'));
+  await set(logRef, {
+    adminUid: user.uid,
+    action,
+    targetId,
+    createdAt: Date.now(),
+    ...extra
+  });
+}
+
 window.login = async () => {
   try {
     const p = new GoogleAuthProvider();
-    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) await signInWithRedirect(auth,p);
-    else await signInWithPopup(auth,p);
+    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) await signInWithRedirect(auth, p);
+    else await signInWithPopup(auth, p);
   } catch(e){ $('gateMsg').textContent = e.message; }
 };
 window.logout = () => signOut(auth);
@@ -227,13 +239,13 @@ window.logout = () => signOut(auth);
 onAuthStateChanged(auth, async u => {
   if (!u){ $('gate').style.display='flex'; $('layout').classList.remove('show'); return; }
   try {
-    const snap = await get(ref(db,`admins/${u.uid}`));
-    if (!snap.exists() || snap.val()!==true){
+    const snap = await get(ref(db, `admins/${u.uid}`));
+    if (!snap.exists() || snap.val() !== true){
       $('gateMsg').textContent = '❌ Akun ini bukan administrator.';
       await signOut(auth); return;
     }
   } catch(e){
-    $('gateMsg').textContent = 'Gagal verifikasi admin.';
+    $('gateMsg').textContent = 'Gagal verifikasi admin: ' + e.message;
     await signOut(auth); return;
   }
   user = u;
@@ -255,6 +267,8 @@ function loadAll(){
     $('sPrice').textContent = fmtRp(d.price||500);
     $('cfgPrice').value = d.price || 500;
     renderChart();
+  }, err => {
+    $('health').innerHTML = '❌ <b style="color:var(--danger)">Error:</b> ' + err.message;
   });
   $('health').innerHTML = '✅ <b style="color:var(--neon)">Terhubung</b> ke Firebase Realtime Database.';
 
@@ -263,22 +277,22 @@ function loadAll(){
     deposits.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
     $('sPending').textContent = deposits.filter(d=>d.status==='pending').length;
     renderDeposits();
-  });
+  }, err => console.error('deposits:', err));
 
   onValue(ref(db,'users'), s=>{
     users = []; s.forEach(c=>users.push({uid:c.key,...c.val()}));
     $('sUsers').textContent = users.length;
     renderUsers();
-  });
+  }, err => console.error('users:', err));
 
-  onValue(ref(db,'wallets'), s=>{ wallets = s.val()||{}; renderUsers(); });
+  onValue(ref(db,'wallets'), s=>{ wallets = s.val()||{}; renderUsers(); }, err => console.error('wallets:', err));
 
   onValue(query(ref(db,'transactions'), orderByChild('createdAt'), limitToLast(200)), s=>{
     txs = []; s.forEach(c=>txs.push({id:c.key,...c.val()}));
     txs.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
     $('sTx').textContent = txs.length;
     renderTx();
-  });
+  }, err => console.error('transactions:', err));
 
   onValue(query(ref(db,'adminLogs'), orderByChild('createdAt'), limitToLast(50)), s=>{
     const logs=[]; s.forEach(c=>logs.push({id:c.key,...c.val()}));
@@ -286,13 +300,13 @@ function loadAll(){
     $('logList').innerHTML = logs.length
       ? logs.map(l=>`<div class="logitem"><span><strong>${l.action}</strong> · target <code class="mono">${(l.targetId||'—').slice(0,12)}</code></span><span>${fmtTime(l.createdAt)}</span></div>`).join('')
       : '<div class="empty">Belum ada log</div>';
-  });
+  }, err => console.error('logs:', err));
 
   onValue(query(ref(db,'publicTransactions'), orderByChild('createdAt'), limitToLast(500)), s=>{
     lastPublicTxs = []; s.forEach(c=>lastPublicTxs.push(c.val()));
     lastPublicTxs.sort((a,b)=>a.createdAt-b.createdAt);
     renderChart();
-  });
+  }, err => console.error('publicTx:', err));
 }
 
 function renderChart(){
@@ -374,33 +388,41 @@ window.approveDeposit = async id => {
   if (!dep) return alert('Deposit tidak ditemukan.');
 
   try {
-    // Step 1: Atomic status change (prevents double-credit)
-    const statusRes = await runTransaction(ref(db,`deposits/${id}/status`), s => {
-      if (s !== 'pending') return; // abort if not pending
+    // Step 1: Atomic status change — abort jika sudah bukan pending
+    const statusRes = await runTransaction(ref(db, `deposits/${id}/status`), s => {
+      if (s !== 'pending') return;  // abort
       return 'approved';
     });
-    if (!statusRes.committed) throw new Error('Deposit sudah diproses.');
+    if (!statusRes.committed) throw new Error('Deposit sudah diproses sebelumnya.');
 
-    // Step 2: Credit wallet atomically
-    const walletRes = await runTransaction(ref(db,`wallets/${dep.uid}`), w => {
-      w = w || {rupiahBalance:0, cazoBalance:0};
-      w.rupiahBalance = Number(w.rupiahBalance||0) + Number(dep.amount);
-      w.lastTrade = {type:'admin_credit', amount:Number(dep.amount), txId:id, at:Date.now()};
+    // Step 2: Atomic wallet credit
+    const walletRes = await runTransaction(ref(db, `wallets/${dep.uid}`), w => {
+      w = w || { rupiahBalance: 0, cazoBalance: 0 };
+      w.rupiahBalance = Number(w.rupiahBalance || 0) + Number(dep.amount);
+      w.lastTrade = {
+        type: 'admin_credit',
+        amount: Number(dep.amount),
+        unitPrice: 0,
+        quantity: 0,
+        txId: id,
+        at: Date.now()
+      };
       return w;
     });
-    if (!walletRes.committed) throw new Error('Gagal kredit saldo.');
+    if (!walletRes.committed) {
+      // Rollback status agar tidak stuck
+      await set(ref(db, `deposits/${id}/status`), 'pending');
+      throw new Error('Gagal kredit saldo — status dikembalikan ke pending.');
+    }
 
-    // Step 3: Update metadata
-    await update(ref(db,`deposits/${id}`), {
+    // Step 3: Metadata
+    await update(ref(db, `deposits/${id}`), {
       reviewedAt: Date.now(),
       reviewedBy: user.uid
     });
 
     // Step 4: Log
-    await push(ref(db,'adminLogs'), {
-      adminUid: user.uid, action: 'deposit_approve',
-      targetId: id, createdAt: Date.now()
-    });
+    await writeLog('deposit_approve', id, { amount: dep.amount, targetUid: dep.uid });
 
     alert('✅ Deposit disetujui.');
   } catch(e){
@@ -412,17 +434,17 @@ window.rejectDeposit = async id => {
   const reason = prompt('Alasan penolakan (wajib, min 3 karakter):');
   if (!reason || reason.trim().length < 3) return alert('Alasan wajib diisi.');
   try {
-    const res = await runTransaction(ref(db,`deposits/${id}/status`), s => {
+    const res = await runTransaction(ref(db, `deposits/${id}/status`), s => {
       if (s !== 'pending') return;
       return 'rejected';
     });
     if (!res.committed) throw new Error('Deposit sudah diproses.');
-    await update(ref(db,`deposits/${id}`), {
-      reviewedAt: Date.now(), reviewedBy: user.uid, rejectReason: reason.trim()
+    await update(ref(db, `deposits/${id}`), {
+      reviewedAt: Date.now(),
+      reviewedBy: user.uid,
+      rejectReason: reason.trim()
     });
-    await push(ref(db,'adminLogs'), {
-      adminUid: user.uid, action: 'deposit_reject', targetId: id, reason: reason.trim(), createdAt: Date.now()
-    });
+    await writeLog('deposit_reject', id, { reason: reason.trim() });
     alert('✅ Deposit ditolak.');
   } catch(e){ alert('❌ Gagal: ' + e.message); }
 };
@@ -462,27 +484,28 @@ window.renderTx = () => {
 
 window.savePrice = async () => {
   const price = parseFloat($('cfgPrice').value);
-  if (!Number.isFinite(price) || price <= 0){ $('priceMsg').textContent='❌ Harga tidak valid'; $('priceMsg').style.color='var(--danger)'; return; }
-  if (!confirm('Ubah harga CAZO menjadi ' + fmtRp(price) + '?\n\nRules membatasi perubahan 50% per operasi.')) return;
+  if (!Number.isFinite(price) || price <= 0){
+    $('priceMsg').textContent='❌ Harga tidak valid';
+    $('priceMsg').style.color='var(--danger)';
+    return;
+  }
+  if (!confirm('Ubah harga CAZO menjadi ' + fmtRp(price) + '?')) return;
   try {
-    await update(ref(db,'market/cazo'), {price, lastUpdated: Date.now()});
-    await push(ref(db,'adminLogs'), {
-      adminUid: user.uid, action: 'update_price', targetId: 'market/cazo/price',
-      newValue: price, createdAt: Date.now()
-    });
-    $('priceMsg').textContent='✅ Harga diperbarui'; $('priceMsg').style.color='var(--neon)';
+    await update(ref(db, 'market/cazo'), { price, lastUpdated: Date.now() });
+    await writeLog('update_price', 'market/cazo', { newValue: price });
+    $('priceMsg').textContent='✅ Harga diperbarui';
+    $('priceMsg').style.color='var(--neon)';
   } catch(e){
-    $('priceMsg').textContent='❌ '+e.message; $('priceMsg').style.color='var(--danger)';
+    $('priceMsg').textContent='❌ '+e.message;
+    $('priceMsg').style.color='var(--danger)';
   }
 };
 
 window.resetVolumes = async () => {
   if (!confirm('Reset volume beli & jual ke 0? Transaksi tidak dihapus.')) return;
   try {
-    await update(ref(db,'market/cazo'), {buyVolume: 0, sellVolume: 0, lastUpdated: Date.now()});
-    await push(ref(db,'adminLogs'), {
-      adminUid: user.uid, action: 'reset_volumes', targetId: 'market/cazo', createdAt: Date.now()
-    });
+    await update(ref(db, 'market/cazo'), { buyVolume: 0, sellVolume: 0, lastUpdated: Date.now() });
+    await writeLog('reset_volumes', 'market/cazo');
     alert('✅ Volume direset.');
   } catch(e){ alert('❌ ' + e.message); }
 };
