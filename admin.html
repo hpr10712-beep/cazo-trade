@@ -16,8 +16,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 .gatecard h1{font-size:1.4rem;font-weight:900;margin-bottom:8px}
 .gatecard p{color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:20px}
 .gbtn{width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),#5a3fd8);color:#fff;border:none;border-radius:12px;font-weight:700;font-family:inherit;font-size:.9rem;cursor:pointer;transition:.2s}
-.gbtn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(124,92,255,.4)}
-.gmsg{margin-top:14px;font-size:.8rem;color:var(--danger)}
+.gbtn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 20px rgba(124,92,255,.4)}
+.gbtn:disabled{opacity:.6;cursor:not-allowed}
+.gmsg{margin-top:14px;font-size:.8rem;color:var(--danger);line-height:1.5;word-break:break-word}
+.gmsg.info{color:var(--muted)}
 .layout{display:none;min-height:100vh}
 .layout.show{display:flex}
 .sb{width:240px;background:var(--card);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;flex-shrink:0}
@@ -96,7 +98,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
     <div class="gicon">🔐</div>
     <h1>CAZO Admin</h1>
     <p>Panel administrator. Login dengan Google untuk melanjutkan.</p>
-    <button class="gbtn" onclick="login()">Masuk dengan Google</button>
+    <button class="gbtn" id="loginBtn" onclick="login()">Masuk dengan Google</button>
     <p class="gmsg" id="gateMsg"></p>
   </div>
 </div>
@@ -195,7 +197,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue, get, set, update, push, runTransaction, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const cfg = {
   apiKey:"AIzaSyCHr0eemIkfHNFDUkSaFDklp_c1OgmSnl8",
@@ -213,7 +215,130 @@ const fmtNum = n => Number(n||0).toLocaleString('id-ID',{maximumFractionDigits:2
 const fmtTime = t => t ? new Date(t).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
 
 let user = null, deposits = [], users = [], txs = [], wallets = {}, lastPublicTxs = [], chart, candleS;
+let loadedListeners = false;
 
+// =================================================================
+// ==== KUNCI PERBAIKAN #1: handle redirect result SEBELUM apa pun ====
+// =================================================================
+getRedirectResult(auth)
+  .then(res => {
+    if (res && res.user) {
+      console.log('[CAZO] Redirect login berhasil:', res.user.email);
+    }
+  })
+  .catch(err => {
+    console.error('[CAZO] Redirect error:', err);
+    const msg = $('gateMsg');
+    if (msg) {
+      msg.textContent = '❌ Login redirect gagal: ' + (err.code || '') + ' — ' + (err.message || '');
+      msg.classList.remove('info');
+    }
+  });
+
+// =================================================================
+// ==== KUNCI PERBAIKAN #2: login dengan fallback popup→redirect ====
+// =================================================================
+window.login = async () => {
+  const btn = $('loginBtn');
+  const msg = $('gateMsg');
+  msg.textContent = '⏳ Membuka Google sign-in...';
+  msg.className = 'gmsg info';
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+
+  try {
+    // Coba popup dulu (lebih cepat, mudah debug)
+    await signInWithPopup(auth, provider);
+    // Kalau sampai sini, popup berhasil → onAuthStateChanged akan fire
+    console.log('[CAZO] Popup login sukses');
+  } catch (e) {
+    console.warn('[CAZO] Popup gagal:', e.code, e.message);
+
+    // Fallback ke redirect untuk popup-blocked / cancelled / unsupported
+    const fallbackCodes = [
+      'auth/popup-blocked',
+      'auth/popup-closed-by-user',
+      'auth/cancelled-popup-request',
+      'auth/operation-not-supported-in-this-environment',
+      'auth/web-storage-unsupported'
+    ];
+    if (fallbackCodes.includes(e.code)) {
+      msg.textContent = '⏳ Mengalihkan ke halaman Google...';
+      try {
+        await signInWithRedirect(auth, provider);
+        return; // halaman akan reload
+      } catch (re) {
+        msg.textContent = '❌ ' + (re.code || '') + ': ' + (re.message || 'Redirect gagal');
+        btn.disabled = false;
+        btn.textContent = 'Masuk dengan Google';
+        return;
+      }
+    }
+
+    // Error lain — tampilkan jelas
+    let hint = '';
+    if (e.code === 'auth/unauthorized-domain') {
+      hint = ' (Domain belum terdaftar di Firebase Console → Authentication → Settings → Authorized domains)';
+    } else if (e.code === 'auth/operation-not-allowed') {
+      hint = ' (Google sign-in belum diaktifkan di Firebase Console → Authentication → Sign-in method)';
+    } else if (e.code === 'auth/invalid-api-key') {
+      hint = ' (API key Firebase salah)';
+    }
+    msg.textContent = '❌ ' + (e.code || 'Error') + ': ' + (e.message || '') + hint;
+    btn.disabled = false;
+    btn.textContent = 'Masuk dengan Google';
+  }
+};
+
+window.logout = () => signOut(auth);
+
+// =================================================================
+// ==== KUNCI PERBAIKAN #3: onAuthStateChanged + timeout fallback ====
+// =================================================================
+let authResolved = false;
+const authTimeout = setTimeout(() => {
+  if (!authResolved) {
+    console.warn('[CAZO] Auth state tidak settle setelah 15 detik');
+    const msg = $('gateMsg');
+    if (msg) {
+      msg.textContent = '⚠️ Firebase Auth tidak merespons. Cek koneksi internet atau buka Console (F12).';
+      msg.classList.remove('info');
+    }
+  }
+}, 15000);
+
+onAuthStateChanged(auth, u => {
+  authResolved = true;
+  clearTimeout(authTimeout);
+  console.log('[CAZO] onAuthStateChanged:', u ? 'LOGIN ' + u.email : 'LOGOUT');
+
+  if (!u) {
+    user = null;
+    $('gate').style.display = 'flex';
+    $('layout').classList.remove('show');
+    const btn = $('loginBtn');
+    btn.disabled = false;
+    btn.textContent = 'Masuk dengan Google';
+    return;
+  }
+
+  user = u;
+  $('gate').style.display = 'none';
+  $('layout').classList.add('show');
+  $('adminInfo').textContent = u.email || u.uid.slice(0, 12);
+
+  if (!loadedListeners) {
+    loadedListeners = true;
+    loadAll();
+  }
+});
+
+// =================================================================
+// ==== Fungsi-fungsi panel admin ====
+// =================================================================
 async function writeLog(action, targetId, extra = {}) {
   const logRef = push(ref(db, 'adminLogs'));
   await set(logRef, {
@@ -224,29 +349,6 @@ async function writeLog(action, targetId, extra = {}) {
     ...extra
   });
 }
-
-window.login = async () => {
-  try {
-    const p = new GoogleAuthProvider();
-    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) await signInWithRedirect(auth, p);
-    else await signInWithPopup(auth, p);
-  } catch(e){ $('gateMsg').textContent = e.message; }
-};
-window.logout = () => signOut(auth);
-
-// ==== LOGIN ADMIN TANPA CEK /admins ====
-onAuthStateChanged(auth, u => {
-  if (!u){
-    $('gate').style.display = 'flex';
-    $('layout').classList.remove('show');
-    return;
-  }
-  user = u;
-  $('gate').style.display = 'none';
-  $('layout').classList.add('show');
-  $('adminInfo').textContent = u.email || u.uid.slice(0, 12);
-  loadAll();
-});
 
 window.showPanel = p => {
   ['dash','deposits','users','tx','market','logs'].forEach(x=>$('p'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('hidden', x!==p));
