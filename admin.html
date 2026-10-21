@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>CAZO Admin</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root{--bg:#0d0f14;--side:#12151c;--card:#171b24;--line:#262c39;--ac:#6ea8ff;--ok:#3ddc97;--bad:#ff5d73;--wait:#ffc857;--txt:#e6e9f0;--mut:#8b94a7}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font:14px/1.45 Inter,system-ui,sans-serif;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0}
+.hidden{display:none!important}
+#gate{min-height:100vh;display:grid;place-items:center;text-align:center;padding:20px}
+#gate div{max-width:380px;background:var(--card);border:1px solid var(--line);padding:28px;border-radius:14px}
+.btn{background:#222836;border:1px solid var(--line);padding:8px 14px;border-radius:8px;font-weight:600}
+.btn.p{background:var(--ac);color:#06111f;border:0}.btn.ok{background:var(--ok);color:#04150d;border:0}.btn.bad{background:var(--bad);color:#fff;border:0}
+.btn.sm{padding:4px 10px;font-size:12px}.btn:disabled{opacity:.5}
+#shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+aside{background:var(--side);border-right:1px solid var(--line);padding:16px 10px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px}
+aside h1{font-size:16px;padding:0 10px 14px;letter-spacing:.1em}aside h1 b{color:var(--ac)}
+aside button{background:none;color:var(--mut);text-align:left;padding:10px 12px;border-radius:8px}
+aside button.on{background:#1d2433;color:var(--txt)}
+aside .me{margin-top:auto;font-size:12px;color:var(--mut);padding:10px;word-break:break-all}
+main{padding:20px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+.top h2{font-size:20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card span{color:var(--mut);font-size:12px}.card b{display:block;font-size:20px;margin-top:4px}
+.sec{display:none}.sec.on{display:block}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tools input,.tools select,.f input,.f textarea{background:#0f121a;border:1px solid var(--line);padding:8px 10px;border-radius:8px;outline:none}
+.tools input{min-width:200px}
+.tw{overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap}
+th{color:var(--mut);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--card)}
+.chip{padding:2px 8px;border-radius:99px;font-size:11px;background:#262c39}
+.chip.ok{background:#12372a;color:var(--ok)}.chip.bad{background:#40181f;color:var(--bad)}.chip.wait{background:#40340f;color:var(--wait)}
+.mono{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut)}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.f label{display:block;color:var(--mut);font-size:12px;margin-bottom:4px}.f input,.f textarea{width:100%}
+#chart{height:380px}
+.modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:50;padding:16px}
+.modal>div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;width:100%;max-width:480px;max-height:92vh;overflow:auto}
+.modal img{max-width:100%;border-radius:8px;margin:8px 0;background:#fff}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;margin:10px 0;font-size:13px}.kv span{color:var(--mut)}
+.pill{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+#toast{position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid var(--ac);padding:10px 14px;border-radius:10px;opacity:0;transition:.3s;z-index:99;pointer-events:none;max-width:80vw}
+#toast.show{opacity:1}#toast.err{border-color:var(--bad)}
+@media(max-width:800px){#shell{grid-template-columns:1fr}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;padding:8px}aside h1,aside .me{display:none}main{padding:12px}}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <h1 style="letter-spacing:.1em;margin-bottom:8px">CAZO <b style="color:var(--ac)">ADMIN</b></h1>
+    <p id="gmsg" style="color:var(--mut);margin-bottom:16px">Masuk dengan akun Google administrator.</p>
+    <button class="btn p" id="gLogin">Masuk dengan Google</button>
+    <button class="btn hidden" id="gOut" style="margin-top:8px">Keluar</button>
+    <p class="mono" id="gUid" style="margin-top:14px;word-break:break-all"></p>
+  </div>
+</div>
+
+<div id="shell" class="hidden">
+<aside>
+  <h1>CAZO <b>ADMIN</b></h1>
+  <button data-s="dash" class="on">Dashboard</button>
+  <button data-s="deps">Verifikasi Deposit</button>
+  <button data-s="users">Pengguna</button>
+  <button data-s="txs">Transaksi</button>
+  <button data-s="chart">Grafik &amp; Candle</button>
+  <button data-s="set">Pengaturan Pasar</button>
+  <button data-s="ann">Pengumuman</button>
+  <button data-s="logs">Log Admin</button>
+  <button data-s="health">Status Layanan</button>
+  <div class="me"><span id="meMail"></span><br><button class="btn sm" id="out" style="margin-top:6px">Keluar</button></div>
+</aside>
+<main>
+
+<section class="sec on" id="s-dash">
+  <div class="top"><h2>Dashboard</h2></div>
+  <div class="cards">
+    <div class="card"><span>Harga CAZO</span><b id="kPrice">—</b></div>
+    <div class="card"><span>Pengguna terdaftar</span><b id="kUsers">—</b></div>
+    <div class="card"><span>Total saldo Rupiah pengguna</span><b id="kRp">—</b></div>
+    <div class="card"><span>Total CAZO pengguna</span><b id="kCz">—</b></div>
+    <div class="card"><span>Deposit menunggu verifikasi</span><b id="kPend">—</b></div>
+    <div class="card"><span>Transaksi (200 terakhir)</span><b id="kTx">—</b></div>
+  </div>
+</section>
+
+<section class="sec" id="s-deps">
+  <div class="top"><h2>Permintaan Deposit</h2></div>
+  <div class="tools">
+    <input id="dQ" placeholder="Cari UID / ID / nomor referensi">
+    <select id="dSt"><option value="">Semua status</option><option value="awaiting_verification">Menunggu verifikasi</option><option value="waiting_payment">Menunggu pembayaran</option><option value="crediting">Diproses</option><option value="approved">Disetujui</option><option value="rejected">Ditolak</option></select>
+    <input type="date" id="dFrom" style="min-width:0"><input type="date" id="dTo" style="min-width:0">
+  </div>
+  <div class="tw"><table><thead><tr><th>Waktu</th><th>Pengguna</th><th>Nominal</th><th>Referensi</th><th>Status</th><th>Bukti</th><th></th></tr></thead><tbody id="dBody"></tbody></table></div>
+  <h3 style="margin:20px 0 8px">Riwayat verifikasi</h3>
+  <div class="tw"><table><thead><tr><th>Waktu</th><th>Referensi</th><th>Nominal</th><th>Hasil</th><th>Admin</th><th>Catatan</th></tr></thead><tbody id="vBody"></tbody></table></div>
+</section>
+
+<section class="sec" id="s-users">
+  <div class="top"><h2>Pengguna</h2></div>
+  <div class="tools"><input id="uQ" placeholder="Cari UID / nama / email"></div>
+  <div class="tw"><table><thead><tr><th>Nama</th><th>Email</th><th>UID</th><th>Rupiah</th><th>CAZO</th><th>Daftar</th><th></th></tr></thead><tbody id="uBody"></tbody></table></div>
+</section>
+
+<section class="sec" id="s-txs">
+  <div class="top"><h2>Transaksi Beli / Jual / Deposit</h2></div>
+  <div class="tools">
+    <input id="tQ" placeholder="Cari UID / ID transaksi / referensi">
+    <select id="tT"><option value="">Semua jenis</option><option>buy</option><option>sell</option><option>deposit</option></select>
+    <input type="date" id="tFrom" style="min-width:0"><input type="date" id="tTo" style="min-width:0">
+  </div>
+  <div class="tw"><table><thead><tr><th>Waktu</th><th>Jenis</th><th>UID</th><th>Jumlah CAZO</th><th>Harga</th><th>Nominal</th><th>Referensi</th><th>Status</th></tr></thead><tbody id="tBody"></tbody></table></div>
+</section>
+
+<section class="sec" id="s-chart">
+  <div class="top"><h2>Grafik harga CAZO</h2><select id="cIv"><option>1m</option><option selected>5m</option><option>15m</option><option>1h</option><option>1d</option></select></div>
+  <div class="card"><div id="chart"></div></div>
+  <h3 style="margin:20px 0 8px">Riwayat candle (read-only)</h3>
+  <div class="tw"><table><thead><tr><th>Waktu</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Vol CAZO</th><th>Trx</th></tr></thead><tbody id="cBody"></tbody></table></div>
+  <p class="mono" style="margin-top:8px">Candle dibentuk server dari transaksi yang tervalidasi. Admin tidak dapat mengubahnya.</p>
+</section>
+
+<section class="sec" id="s-set">
+  <div class="top"><h2>Mekanisme Harga &amp; Batas</h2></div>
+  <div class="card">
+    <p class="mono" style="margin-bottom:12px">Aturan CAZO: tekanan beli &gt; jual → harga turun; jual &gt; beli → naik. Perubahan = −k × (beli−jual)/(beli+jual+L), dibatasi per menit. Perubahan parameter dicatat di log admin dan hanya berlaku untuk transaksi berikutnya.</p>
+    <div class="f" id="setForm"></div>
+    <button class="btn p" id="setSave" style="margin-top:14px">Simpan pengaturan</button>
+  </div>
+</section>
+
+<section class="sec" id="s-ann">
+  <div class="top"><h2>Pengumuman</h2></div>
+  <div class="card f" style="grid-template-columns:1fr"><div><label>Teks pengumuman (maks 400 karakter, kosongkan untuk menghapus)</label><textarea id="annText" rows="3" maxlength="400"></textarea></div>
+  <div><button class="btn p" id="annGo">Publikasikan</button> <button class="btn" id="annClear">Hapus pengumuman</button></div></div>
+</section>
+
+<section class="sec" id="s-logs">
+  <div class="top"><h2>Log Aktivitas Admin</h2></div>
+  <div class="tools"><input id="lQ" placeholder="Cari aksi / target / UID admin"></div>
+  <div class="tw"><table><thead><tr><th>Waktu</th><th>Admin</th><th>Aksi</th><th>Target</th><th>Detail</th></tr></thead><tbody id="lBody"></tbody></table></div>
+</section>
+
+<section class="sec" id="s-health">
+  <div class="top"><h2>Status Layanan</h2></div>
+  <div class="cards">
+    <div class="card"><span>Koneksi Firebase Database</span><b id="hConn">—</b></div>
+    <div class="card"><span>Backend (Cloud Functions)</span><b id="hFn">—</b></div>
+    <div class="card"><span>Pembaruan harga terakhir</span><b id="hUpd">—</b></div>
+    <div class="card"><span>Pasar diinisialisasi</span><b id="hInit">—</b></div>
+  </div>
+  <button class="btn" id="hPing">Uji backend</button> <button class="btn p hidden" id="hInitBtn">Inisialisasi pasar (harga Rp500)</button>
+</section>
+</main>
+</div>
+
+<div class="modal hidden" id="modal"><div id="mBox"></div></div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, get, query, limitToLast, orderByChild } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCHr0eemIkfHNFDUkSaFDklp_c1OgmSnl8",
+  authDomain: "mybro-9ba5f.firebaseapp.com",
+  databaseURL: "https://mybro-9ba5f-default-rtdb.firebaseio.com/",
+  projectId: "mybro-9ba5f"
+});
+const db = getDatabase(app), auth = getAuth(app), fns = getFunctions(app, "asia-southeast1");
+const call = (n) => httpsCallable(fns, n);
+const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const rp = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID", { maximumFractionDigits: 2 });
+const qf = (n) => Number(n || 0).toLocaleString("id-ID", { maximumFractionDigits: 6 });
+const dt = (t) => t ? new Date(t).toLocaleString("id-ID") : "—";
+const short = (s) => s ? s.slice(0, 8) + "…" : "";
+function toast(m, e) { const t = $("#toast"); t.textContent = m; t.className = "show" + (e ? " err" : ""); clearTimeout(toast.t); toast.t = setTimeout(() => t.className = "", 3500); }
+const chip = (s) => { const m = { waiting_payment: ["Menunggu bayar", "wait"], awaiting_verification: ["Menunggu verifikasi", "wait"], crediting: ["Diproses", "wait"], approved: ["Disetujui", "ok"], rejected: ["Ditolak", "bad"], completed: ["Berhasil", "ok"], failed: ["Gagal", "bad"], pending: ["Pending", "wait"] }[s] || [s, ""]; return `<span class="chip ${m[1]}">${m[0]}</span>`; };
+
+let D = { users: {}, wallets: {}, deposits: {}, feed: {}, logs: {}, state: null, settings: {} }, unsubs = [], me = null;
+
+/* ---- Gate ---- */
+const provider = new GoogleAuthProvider();
+$("#gLogin").onclick = async () => { try { await signInWithPopup(auth, provider); } catch (e) { if (e.code === "auth/popup-blocked") signInWithRedirect(auth, provider); else toast(e.message, true); } };
+$("#gOut").onclick = $("#out").onclick = () => signOut(auth);
+getRedirectResult(auth).catch(() => {});
+onAuthStateChanged(auth, async (u) => {
+  unsubs.forEach((x) => x()); unsubs = []; me = null;
+  $("#shell").classList.add("hidden"); $("#gate").classList.remove("hidden");
+  $("#gLogin").classList.toggle("hidden", !!u); $("#gOut").classList.toggle("hidden", !u);
+  if (!u) { $("#gmsg").textContent = "Masuk dengan akun Google administrator."; $("#gUid").textContent = ""; return; }
+  $("#gmsg").textContent = "Memeriksa hak akses..."; $("#gUid").textContent = "UID: " + u.uid;
+  let isAdmin = false;
+  try { isAdmin = (await get(ref(db, `admins/${u.uid}`))).val() === true; } catch (e) {}
+  if (!isAdmin) { $("#gmsg").textContent = "Akun ini bukan administrator. (Pemeriksaan sebenarnya dilakukan oleh Security Rules & backend.)"; return; }
+  me = u; $("#meMail").textContent = u.email; $("#gate").classList.add("hidden"); $("#shell").classList.remove("hidden");
+  start();
+});
+
+/* ---- Nav ---- */
+$("aside").onclick = (e) => { const b = e.target.closest("button[data-s]"); if (!b) return; $$("aside button").forEach((x) => x.classList.toggle("on", x === b)); $$(".sec").forEach((x) => x.classList.toggle("on", x.id === "s-" + b.dataset.s)); if (b.dataset.s === "chart") { watchCandles(); } };
+
+/* ---- Data ---- */
+function start() {
+  const w = (path, key, q) => unsubs.push(onValue(q || ref(db, path), (s) => { D[key] = s.val() || {}; renderAll(); }, (e) => toast(`Gagal membaca ${path}: ${e.code}`, true)));
+  w("users", "users"); w("wallets", "wallets"); w("deposits", "deposits");
+  w("txFeed", "feed", query(ref(db, "txFeed"), orderByChild("createdAt"), limitToLast(200)));
+  w("adminLogs", "logs", query(ref(db, "adminLogs"), orderByChild("createdAt"), limitToLast(150)));
+  w("market/cazo/state", "state"); w("market/cazo/settings", "settings");
+  unsubs.push(onValue(ref(db, ".info/connected"), (s) => { $("#hConn").innerHTML = `<span class="pill" style="background:${s.val() ? "var(--ok)" : "var(--bad)"}"></span>${s.val() ? "Terhubung" : "Terputus"}`; }));
+  unsubs.push(onValue(ref(db, "announcements/latest"), (s) => { $("#annText").value = s.val()?.text || ""; }));
+}
+const allDeps = () => Object.entries(D.deposits).flatMap(([uid, o]) => Object.values(o || {}).map((d) => ({ ...d, uid: d.uid || uid }))).sort((a, b) => b.createdAt - a.createdAt);
+const nameOf = (uid) => D.users[uid]?.displayName || D.users[uid]?.email || short(uid);
+
+function renderAll() { renderDash(); renderDeps(); renderUsers(); renderTxs(); renderLogs(); renderSettings(); renderHealth(); }
+function renderDash() {
+  $("#kPrice").textContent = rp(D.state?.price ?? 500);
+  $("#kUsers").textContent = Object.keys(D.users).length;
+  $("#kRp").textContent = rp(Object.values(D.wallets).reduce((a, w) => a + (w.rupiahBalance || 0), 0));
+  $("#kCz").textContent = qf(Object.values(D.wallets).reduce((a, w) => a + (w.cazoBalance || 0), 0));
+  $("#kPend").textContent = allDeps().filter((d) => d.status === "awaiting_verification").length;
+  $("#kTx").textContent = Object.keys(D.feed).length;
+}
+function renderDeps() {
+  const q = $("#dQ").value.trim().toLowerCase(), st = $("#dSt").value;
+  const f0 = $("#dFrom").value ? new Date($("#dFrom").value).getTime() : 0, f1 = $("#dTo").value ? new Date($("#dTo").value).getTime() + 864e5 : Infinity;
+  const list = allDeps().filter((d) => (!st || d.status === st) && d.createdAt >= f0 && d.createdAt < f1 && (!q || [d.uid, d.id, d.reference].some((x) => String(x).toLowerCase().includes(q))));
+  $("#dBody").innerHTML = list.map((d) => `<tr><td>${dt(d.createdAt)}</td><td>${esc(nameOf(d.uid))}<div class="mono">${esc(d.uid)}</div></td><td><b>${rp(d.amount)}</b></td><td class="mono">${esc(d.reference)}</td><td>${chip(d.status)}</td><td>${d.hasProof ? "Ada" : "—"}</td><td><button class="btn sm p" data-d="${esc(d.uid)}|${esc(d.id)}">Detail</button></td></tr>`).join("") || '<tr><td colspan="7">Tidak ada data.</td></tr>';
+  $("#vBody").innerHTML = allDeps().filter((d) => d.reviewedBy).sort((a, b) => (b.reviewedAt || 0) - (a.reviewedAt || 0)).map((d) => `<tr><td>${dt(d.reviewedAt)}</td><td class="mono">${esc(d.reference)}</td><td>${rp(d.amount)}</td><td>${chip(d.status)}</td><td class="mono">${short(d.reviewedBy)}</td><td>${esc(d.note || "")}</td></tr>`).join("") || '<tr><td colspan="6">Belum ada.</td></tr>';
+}
+["#dQ", "#dSt", "#dFrom", "#dTo"].forEach((s) => $(s).oninput = renderDeps);
+function renderUsers() {
+  const q = $("#uQ").value.trim().toLowerCase();
+  $("#uBody").innerHTML = Object.entries(D.users).filter(([uid, u]) => !q || [uid, u.displayName, u.email].some((x) => String(x || "").toLowerCase().includes(q))).sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0)).map(([uid, u]) => { const w = D.wallets[uid] || {}; return `<tr><td>${esc(u.displayName)}</td><td>${esc(u.email)}</td><td class="mono">${esc(uid)}</td><td>${rp(w.rupiahBalance)}</td><td>${qf(w.cazoBalance)}</td><td>${dt(u.createdAt)}</td><td><button class="btn sm" data-u="${esc(uid)}">Transaksi</button></td></tr>`; }).join("") || '<tr><td colspan="7">Tidak ada.</td></tr>';
+}
+$("#uQ").oninput = renderUsers;
+function renderTxs() {
+  const q = $("#tQ").value.trim().toLowerCase(), ty = $("#tT").value;
+  const f0 = $("#tFrom").value ? new Date($("#tFrom").value).getTime() : 0, f1 = $("#tTo").value ? new Date($("#tTo").value).getTime() + 864e5 : Infinity;
+  const list = Object.entries(D.feed).map(([id, t]) => ({ id, ...t })).filter((t) => (!ty || t.type === ty) && t.createdAt >= f0 && t.createdAt < f1 && (!q || [t.uid, t.id, t.reference].some((x) => String(x || "").toLowerCase().includes(q)))).sort((a, b) => b.createdAt - a.createdAt);
+  $("#tBody").innerHTML = list.map((t) => `<tr><td>${dt(t.createdAt)}</td><td>${esc(t.type)}</td><td class="mono">${esc(short(t.uid))}</td><td>${t.type === "deposit" ? "—" : qf(t.quantity)}</td><td>${t.type === "deposit" ? "—" : rp(t.unitPrice)}</td><td>${rp(t.amount)}</td><td class="mono">${esc(t.reference)}</td><td>${chip(t.status)}</td></tr>`).join("") || '<tr><td colspan="8">Tidak ada data.</td></tr>';
+}
+["#tQ", "#tT", "#tFrom", "#tTo"].forEach((s) => $(s).oninput = renderTxs);
+function renderLogs() {
+  const q = $("#lQ").value.trim().toLowerCase();
+  $("#lBody").innerHTML = Object.values(D.logs).sort((a, b) => b.createdAt - a.createdAt).filter((l) => !q || JSON.stringify(l).toLowerCase().includes(q)).map((l) => `<tr><td>${dt(l.createdAt)}</td><td class="mono">${esc(short(l.adminUid))}</td><td>${esc(l.action)}</td><td class="mono">${esc(l.targetId)}</td><td class="mono" style="white-space:normal">${esc(JSON.stringify(l.meta || {}))}</td></tr>`).join("") || '<tr><td colspan="5">Belum ada log.</td></tr>';
+}
+$("#lQ").oninput = renderLogs;
+$("#uBody").onclick = (e) => { const b = e.target.closest("[data-u]"); if (!b) return; $("#tQ").value = b.dataset.u; renderTxs(); $('aside [data-s="txs"]').click(); };
+
+/* ---- Deposit detail & review ---- */
+$("#dBody").onclick = async (e) => {
+  const b = e.target.closest("[data-d]"); if (!b) return;
+  const [uid, id] = b.dataset.d.split("|"); const d = D.deposits[uid]?.[id]; if (!d) return;
+  const canReview = d.status === "awaiting_verification" || d.status === "crediting" || d.status === "waiting_payment";
+  $("#mBox").innerHTML = `<h3 style="margin-bottom:6px">Detail deposit</h3>
+  <div class="kv"><span>Pengguna</span><div>${esc(nameOf(uid))}<div class="mono">${esc(uid)}</div></div><span>Referensi</span><div class="mono">${esc(d.reference)}</div><span>Nominal</span><b>${rp(d.amount)}</b><span>Dibuat</span><div>${dt(d.createdAt)}</div><span>Status</span><div>${chip(d.status)}</div></div>
+  <div id="proof" class="mono">${d.hasProof ? "Memuat bukti..." : "Pengguna tidak mengunggah bukti."}</div>
+  ${canReview ? `<textarea id="rNote" rows="2" maxlength="300" placeholder="Catatan (wajib diisi jika menolak)" style="width:100%;margin-top:10px;background:#0f121a;border:1px solid var(--line);border-radius:8px;padding:8px"></textarea>
+  <p class="mono" style="margin-top:8px">Pastikan dana benar-benar masuk di rekening/QRIS dengan nominal yang sama sebelum menyetujui. Kredit saldo hanya terjadi satu kali.</p>
+  <div style="display:flex;gap:8px;margin-top:12px"><button class="btn ok" id="rOk">Setujui &amp; kreditkan</button><button class="btn bad" id="rNo">Tolak</button><button class="btn" id="rX">Tutup</button></div>` : '<button class="btn" id="rX" style="margin-top:12px">Tutup</button>'}`;
+  $("#modal").classList.remove("hidden"); $("#rX").onclick = closeM;
+  if (d.hasProof) { try { const s = await get(ref(db, `depositProofs/${uid}/${id}`)); $("#proof").innerHTML = s.val()?.image ? `<img src="${s.val().image}" alt="Bukti pembayaran">` : "Bukti tidak ditemukan."; } catch (x) { $("#proof").textContent = "Gagal memuat bukti: " + x.code; } }
+  if (!canReview) return;
+  const act = (decision) => async () => {
+    const note = $("#rNote").value.trim();
+    if (decision === "reject" && !note) return toast("Isi catatan alasan penolakan.", true);
+    if (!confirm(decision === "approve" ? `Kreditkan ${rp(d.amount)} ke pengguna ini? Tindakan tidak dapat dibatalkan.` : "Tolak deposit ini?")) return;
+    $("#rOk")?.setAttribute("disabled", ""); $("#rNo").setAttribute("disabled", "");
+    try { const r = (await call("reviewDeposit")({ uid, depositId: id, decision, note })).data; toast(r.status === "approved" ? "Deposit disetujui & dikreditkan." : "Deposit ditolak."); closeM(); }
+    catch (x) { toast(x.message, true); $("#rOk")?.removeAttribute("disabled"); $("#rNo").removeAttribute("disabled"); }
+  };
+  $("#rOk").onclick = act("approve"); $("#rNo").onclick = act("reject");
+};
+function closeM() { $("#modal").classList.add("hidden"); }
+$("#modal").onclick = (e) => { if (e.target.id === "modal") closeM(); };
+
+/* ---- Chart ---- */
+let chart, cs, curUnsub = null;
+function watchCandles() {
+  if (!chart) {
+    chart = LightweightCharts.createChart($("#chart"), { autoSize: true, layout: { background: { color: "transparent" }, textColor: "#8b94a7" }, grid: { vertLines: { color: "#1d2230" }, horzLines: { color: "#1d2230" } }, timeScale: { timeVisible: true, borderColor: "#262c39" }, rightPriceScale: { borderColor: "#262c39" } });
+    cs = chart.addCandlestickSeries({ upColor: "#3ddc97", downColor: "#ff5d73", borderVisible: false, wickUpColor: "#3ddc97", wickDownColor: "#ff5d73" });
+  }
+  if (curUnsub) curUnsub();
+  curUnsub = onValue(query(ref(db, `market/cazo/candles/${$("#cIv").value}`), limitToLast(300)), (s) => {
+    const arr = Object.entries(s.val() || {}).map(([t, c]) => ({ t: +t, c })).sort((a, b) => a.t - b.t);
+    cs.setData(arr.map(({ t, c }) => ({ time: t, open: c.o, high: c.h, low: c.l, close: c.c }))); chart.timeScale().fitContent();
+    $("#cBody").innerHTML = arr.slice().reverse().slice(0, 100).map(({ t, c }) => `<tr><td>${dt(t * 1000)}</td><td>${c.o}</td><td>${c.h}</td><td>${c.l}</td><td>${c.c}</td><td>${qf(c.v)}</td><td>${c.n}</td></tr>`).join("") || '<tr><td colspan="7">Belum ada candle. Menunggu transaksi pertama.</td></tr>';
+  });
+}
+$("#cIv").onchange = watchCandles;
+
+/* ---- Settings ---- */
+const SET = [["feePct", "Biaya transaksi (%)"], ["minOrderRp", "Minimal order (Rp)"], ["maxOrderRp", "Maksimal order (Rp)"], ["minDeposit", "Minimal deposit (Rp)"], ["maxDeposit", "Maksimal deposit (Rp)"], ["k", "k — sensitivitas harga (0–1)"], ["maxChangePct", "Batas perubahan harga / menit (%)"], ["liquidity", "L — penyangga likuiditas (Rp)"]];
+const DEF = { feePct: 0.5, minOrderRp: 1000, maxOrderRp: 5000000, minDeposit: 5000, maxDeposit: 50000000, k: 0.05, maxChangePct: 2, liquidity: 50000 };
+$("#setForm").innerHTML = SET.map(([k, l]) => `<div><label>${l}</label><input type="number" step="any" data-k="${k}"></div>`).join("");
+function renderSettings() { const s = { ...DEF, ...D.settings }; $$("#setForm input").forEach((i) => { if (document.activeElement !== i) i.value = s[i.dataset.k]; }); }
+$("#setSave").onclick = async () => {
+  if (!confirm("Simpan pengaturan pasar? Berlaku untuk transaksi berikutnya dan dicatat di log.")) return;
+  const data = {}; $$("#setForm input").forEach((i) => data[i.dataset.k] = Number(i.value));
+  try { await call("updateSettings")(data); toast("Pengaturan disimpan."); } catch (e) { toast(e.message, true); }
+};
+$("#annGo").onclick = async () => { try { await call("postAnnouncement")({ text: $("#annText").value }); toast("Pengumuman diperbarui."); } catch (e) { toast(e.message, true); } };
+$("#annClear").onclick = async () => { if (!confirm("Hapus pengumuman?")) return; try { await call("postAnnouncement")({ text: "" }); toast("Pengumuman dihapus."); } catch (e) { toast(e.message, true); } };
+
+/* ---- Health ---- */
+function renderHealth() {
+  $("#hUpd").textContent = D.state?.lastUpdated ? dt(D.state.lastUpdated) : "Belum ada transaksi";
+  $("#hInit").textContent = D.state ? "Ya" : "Belum"; $("#hInitBtn").classList.toggle("hidden", !!D.state);
+}
+$("#hPing").onclick = async () => {
+  const t = performance.now();
+  try { await call("ensureUser")(); $("#hFn").innerHTML = `<span class="pill" style="background:var(--ok)"></span>OK (${Math.round(performance.now() - t)} ms)`; }
+  catch (e) { $("#hFn").innerHTML = `<span class="pill" style="background:var(--bad)"></span>${esc(e.code || e.message)}`; }
+};
+$("#hInitBtn").onclick = async () => { if (!confirm("Inisialisasi pasar CAZO dengan harga Rp500?")) return; try { await call("initMarket")(); toast("Pasar diinisialisasi."); } catch (e) { toast(e.message, true); } };
+</script>
+</body>
+</html>
