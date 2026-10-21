@@ -1,0 +1,9 @@
+{
+  "database": { "rules": "database.rules.json" },
+  "functions": [{ "source": "functions", "codebase": "default" }],
+  "hosting": {
+    "public": ".",
+    "ignore": ["firebase.json", "database.rules.json", "functions/**", "README.md", "**/node_modules/**", "**/.*"],
+    "cleanUrls": false
+  }
+}
