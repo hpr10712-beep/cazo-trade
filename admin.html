@@ -2,333 +2,490 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CAZO Admin</title>
-<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 <style>
-:root{--bg:#0d0f14;--side:#12151c;--card:#171b24;--line:#262c39;--ac:#6ea8ff;--ok:#3ddc97;--bad:#ff5d73;--wait:#ffc857;--txt:#e6e9f0;--mut:#8b94a7}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font:14px/1.45 Inter,system-ui,sans-serif;min-height:100vh}
-button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer;border:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#060908;--bg2:#0a0f0d;--card:#0f1614;--card2:#131c19;--border:#1a2521;--border2:#243330;--text:#e6f0ec;--muted:#657a72;--primary:#7c5cff;--primaryD:rgba(124,92,255,.15);--neon:#00ff9d;--neonD:rgba(0,255,157,.12);--danger:#ff4d6d;--dangerD:rgba(255,77,109,.12);--warn:#ffc107;--warnD:rgba(255,193,7,.12);--r:14px;--font:'Inter',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(800px 400px at 50% 20%,rgba(124,92,255,.15),transparent 60%)}
+.gatecard{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 28px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.gicon{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--primary),#5a3fd8);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 16px;box-shadow:0 8px 24px rgba(124,92,255,.4)}
+.gatecard h1{font-size:1.4rem;font-weight:900;margin-bottom:8px}
+.gatecard p{color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:20px}
+.gbtn{width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),#5a3fd8);color:#fff;border:none;border-radius:12px;font-weight:700;font-family:inherit;font-size:.9rem;cursor:pointer;transition:.2s}
+.gbtn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(124,92,255,.4)}
+.gmsg{margin-top:14px;font-size:.8rem;color:var(--danger)}
+.layout{display:none;min-height:100vh}
+.layout.show{display:flex}
+.sb{width:240px;background:var(--card);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;flex-shrink:0}
+.sbb{display:flex;align-items:center;gap:10px;padding:0 8px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.sbl{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#5a3fd8);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:.9rem}
+.sbb div b{font-size:.95rem;display:block}
+.sbb div small{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.sb-btn{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;border:none;background:none;color:var(--muted);cursor:pointer;font-family:inherit;font-size:.85rem;font-weight:600;text-align:left;transition:.15s;width:100%}
+.sb-btn:hover{background:var(--card2);color:var(--text)}
+.sb-btn.active{background:var(--primaryD);color:#b5a5ff}
+.sb-btn .ico{font-size:1.05rem;width:20px;text-align:center}
+.main{flex:1;padding:24px;max-width:1400px;overflow-x:hidden}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.topbar h1{font-size:1.4rem;font-weight:800}
+.topbar .ai{font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:8px}
+.topbar .ai::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--neon);box-shadow:0 0 8px var(--neon);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:16px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,var(--primaryD),transparent 70%);border-radius:50%}
+.stat .k{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:flex;align-items:center;gap:6px}
+.stat .v{font-size:1.6rem;font-weight:900;margin-top:6px;letter-spacing:-.5px}
+.stat.neon .v{color:var(--neon)}
+.stat.warn .v{color:var(--warn)}
+.stat.purple .v{color:#b5a5ff}
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:middle}
+th{background:var(--card2);color:var(--muted);font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.6px}
+td{font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.01)}
+.mono{font-family:ui-monospace,monospace;font-size:.72rem;color:var(--muted)}
+.btn{padding:8px 14px;border-radius:9px;border:none;font-weight:700;font-family:inherit;font-size:.75rem;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--neon);color:#04120b}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-ghost{background:var(--card2);color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--primary)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{padding:6px 10px;font-size:.7rem}
+.badge{padding:3px 9px;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:inline-block}
+.badge.pending,.badge.waiting_verification{background:var(--warnD);color:var(--warn)}
+.badge.approved,.badge.success{background:var(--neonD);color:var(--neon)}
+.badge.rejected,.badge.failed{background:var(--dangerD);color:var(--danger)}
+.search-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+input,select{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit;font-size:.82rem;transition:.2s}
+input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primaryD)}
+.frow{margin-bottom:14px}
+.flabel{display:block;font-size:.75rem;color:var(--muted);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.finput{width:100%;padding:12px 14px}
+.logitem{padding:10px 0;border-bottom:1px solid var(--border);font-size:.78rem;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logitem:last-child{border-bottom:none}
+.logitem strong{color:var(--text)}
 .hidden{display:none!important}
-#gate{min-height:100vh;display:grid;place-items:center;text-align:center;padding:20px}
-#gate div{max-width:380px;background:var(--card);border:1px solid var(--line);padding:28px;border-radius:14px}
-.btn{background:#222836;border:1px solid var(--line);padding:8px 14px;border-radius:8px;font-weight:600}
-.btn.p{background:var(--ac);color:#06111f;border:0}.btn.ok{background:var(--ok);color:#04150d;border:0}.btn.bad{background:var(--bad);color:#fff;border:0}
-.btn.sm{padding:4px 10px;font-size:12px}.btn:disabled{opacity:.5}
-#shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
-aside{background:var(--side);border-right:1px solid var(--line);padding:16px 10px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px}
-aside h1{font-size:16px;padding:0 10px 14px;letter-spacing:.1em}aside h1 b{color:var(--ac)}
-aside button{background:none;color:var(--mut);text-align:left;padding:10px 12px;border-radius:8px}
-aside button.on{background:#1d2433;color:var(--txt)}
-aside .me{margin-top:auto;font-size:12px;color:var(--mut);padding:10px;word-break:break-all}
-main{padding:20px;min-width:0}
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap}
-.top h2{font-size:20px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
-.card span{color:var(--mut);font-size:12px}.card b{display:block;font-size:20px;margin-top:4px}
-.sec{display:none}.sec.on{display:block}
-.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.tools input,.tools select,.f input,.f textarea{background:#0f121a;border:1px solid var(--line);padding:8px 10px;border-radius:8px;outline:none}
-.tools input{min-width:200px}
-.tw{overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px}
-table{width:100%;border-collapse:collapse;min-width:640px}
-th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap}
-th{color:var(--mut);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--card)}
-.chip{padding:2px 8px;border-radius:99px;font-size:11px;background:#262c39}
-.chip.ok{background:#12372a;color:var(--ok)}.chip.bad{background:#40181f;color:var(--bad)}.chip.wait{background:#40340f;color:var(--wait)}
-.mono{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut)}
-.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.f label{display:block;color:var(--mut);font-size:12px;margin-bottom:4px}.f input,.f textarea{width:100%}
-#chart{height:380px}
-.modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:50;padding:16px}
-.modal>div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;width:100%;max-width:480px;max-height:92vh;overflow:auto}
-.modal img{max-width:100%;border-radius:8px;margin:8px 0;background:#fff}
-.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;margin:10px 0;font-size:13px}.kv span{color:var(--mut)}
-.pill{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
-#toast{position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid var(--ac);padding:10px 14px;border-radius:10px;opacity:0;transition:.3s;z-index:99;pointer-events:none;max-width:80vw}
-#toast.show{opacity:1}#toast.err{border-color:var(--bad)}
-@media(max-width:800px){#shell{grid-template-columns:1fr}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;padding:8px}aside h1,aside .me{display:none}main{padding:12px}}
+.empty{padding:32px;text-align:center;color:var(--muted);font-size:.85rem}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:300;display:none;align-items:center;justify-content:center;padding:24px}
+.modal.open{display:flex}
+.modal-card{background:var(--card);border:1px solid var(--border);border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;padding:24px}
+.modal-card h3{margin-bottom:16px;font-size:1.1rem}
+.modal-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+#chartContainer{width:100%;height:300px;border-radius:12px;overflow:hidden;background:var(--bg2);border:1px solid var(--border);margin-bottom:16px}
+@media(max-width:860px){
+  .sb{width:64px;padding:16px 6px}
+  .sbb div,.sb-btn span:not(.ico){display:none}
+  .sb-btn{justify-content:center;padding:12px}
+  .main{padding:16px 12px}
+  .topbar h1{font-size:1.1rem}
+}
 </style>
 </head>
 <body>
 
 <div id="gate">
-  <div>
-    <h1 style="letter-spacing:.1em;margin-bottom:8px">CAZO <b style="color:var(--ac)">ADMIN</b></h1>
-    <p id="gmsg" style="color:var(--mut);margin-bottom:16px">Masuk dengan akun Google administrator.</p>
-    <button class="btn p" id="gLogin">Masuk dengan Google</button>
-    <button class="btn hidden" id="gOut" style="margin-top:8px">Keluar</button>
-    <p class="mono" id="gUid" style="margin-top:14px;word-break:break-all"></p>
+  <div class="gatecard">
+    <div class="gicon">🔐</div>
+    <h1>CAZO Admin</h1>
+    <p>Panel administrator. Hanya UID terdaftar di <code>/admins</code> yang dapat mengakses.</p>
+    <button class="gbtn" onclick="login()">Masuk dengan Google</button>
+    <p class="gmsg" id="gateMsg"></p>
   </div>
 </div>
 
-<div id="shell" class="hidden">
-<aside>
-  <h1>CAZO <b>ADMIN</b></h1>
-  <button data-s="dash" class="on">Dashboard</button>
-  <button data-s="deps">Verifikasi Deposit</button>
-  <button data-s="users">Pengguna</button>
-  <button data-s="txs">Transaksi</button>
-  <button data-s="chart">Grafik &amp; Candle</button>
-  <button data-s="set">Pengaturan Pasar</button>
-  <button data-s="ann">Pengumuman</button>
-  <button data-s="logs">Log Admin</button>
-  <button data-s="health">Status Layanan</button>
-  <div class="me"><span id="meMail"></span><br><button class="btn sm" id="out" style="margin-top:6px">Keluar</button></div>
-</aside>
-<main>
+<div class="layout" id="layout">
+  <aside class="sb">
+    <div class="sbb"><div class="sbl">C</div><div><b>CAZO</b><small>Admin</small></div></div>
+    <button class="sb-btn active" data-p="dash" onclick="showPanel('dash')"><span class="ico">📊</span><span>Dashboard</span></button>
+    <button class="sb-btn" data-p="deposits" onclick="showPanel('deposits')"><span class="ico">💰</span><span>Deposit</span></button>
+    <button class="sb-btn" data-p="users" onclick="showPanel('users')"><span class="ico">👥</span><span>Pengguna</span></button>
+    <button class="sb-btn" data-p="tx" onclick="showPanel('tx')"><span class="ico">📈</span><span>Transaksi</span></button>
+    <button class="sb-btn" data-p="market" onclick="showPanel('market')"><span class="ico">⚙️</span><span>Pasar</span></button>
+    <button class="sb-btn" data-p="logs" onclick="showPanel('logs')"><span class="ico">📝</span><span>Log</span></button>
+    <button class="sb-btn" style="margin-top:auto;color:var(--danger)" onclick="logout()"><span class="ico">🚪</span><span>Keluar</span></button>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <h1 id="panelTitle">Dashboard</h1>
+      <div class="ai" id="adminInfo">—</div>
+    </div>
 
-<section class="sec on" id="s-dash">
-  <div class="top"><h2>Dashboard</h2></div>
-  <div class="cards">
-    <div class="card"><span>Harga CAZO</span><b id="kPrice">—</b></div>
-    <div class="card"><span>Pengguna terdaftar</span><b id="kUsers">—</b></div>
-    <div class="card"><span>Total saldo Rupiah pengguna</span><b id="kRp">—</b></div>
-    <div class="card"><span>Total CAZO pengguna</span><b id="kCz">—</b></div>
-    <div class="card"><span>Deposit menunggu verifikasi</span><b id="kPend">—</b></div>
-    <div class="card"><span>Transaksi (200 terakhir)</span><b id="kTx">—</b></div>
-  </div>
-</section>
+    <section id="pDash">
+      <div class="stat-grid">
+        <div class="stat purple"><div class="k">👥 Total Pengguna</div><div class="v" id="sUsers">—</div></div>
+        <div class="stat warn"><div class="k">⏳ Deposit Pending</div><div class="v" id="sPending">—</div></div>
+        <div class="stat neon"><div class="k">💎 Harga CAZO</div><div class="v" id="sPrice">—</div></div>
+        <div class="stat"><div class="k">📊 Total Transaksi</div><div class="v" id="sTx">—</div></div>
+      </div>
+      <div class="card"><h3 style="font-size:.95rem;margin-bottom:10px">Kesehatan Sistem</h3><p style="font-size:.82rem;color:var(--muted)" id="health">Memeriksa...</p></div>
+    </section>
 
-<section class="sec" id="s-deps">
-  <div class="top"><h2>Permintaan Deposit</h2></div>
-  <div class="tools">
-    <input id="dQ" placeholder="Cari UID / ID / nomor referensi">
-    <select id="dSt"><option value="">Semua status</option><option value="awaiting_verification">Menunggu verifikasi</option><option value="waiting_payment">Menunggu pembayaran</option><option value="crediting">Diproses</option><option value="approved">Disetujui</option><option value="rejected">Ditolak</option></select>
-    <input type="date" id="dFrom" style="min-width:0"><input type="date" id="dTo" style="min-width:0">
-  </div>
-  <div class="tw"><table><thead><tr><th>Waktu</th><th>Pengguna</th><th>Nominal</th><th>Referensi</th><th>Status</th><th>Bukti</th><th></th></tr></thead><tbody id="dBody"></tbody></table></div>
-  <h3 style="margin:20px 0 8px">Riwayat verifikasi</h3>
-  <div class="tw"><table><thead><tr><th>Waktu</th><th>Referensi</th><th>Nominal</th><th>Hasil</th><th>Admin</th><th>Catatan</th></tr></thead><tbody id="vBody"></tbody></table></div>
-</section>
+    <section id="pDeposits" class="hidden">
+      <div class="search-row">
+        <input id="depSearch" placeholder="🔍 Cari referensi / UID / nominal" oninput="renderDeposits()" style="flex:1;min-width:180px">
+        <select id="depFilter" onchange="renderDeposits()">
+          <option value="">Semua status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Referensi</th><th>UID</th><th>Nominal</th><th>Waktu</th><th>Status</th><th>Aksi</th></tr></thead>
+        <tbody id="depBody"><tr><td colspan="6" class="empty">Memuat...</td></tr></tbody></table>
+      </div>
+    </section>
 
-<section class="sec" id="s-users">
-  <div class="top"><h2>Pengguna</h2></div>
-  <div class="tools"><input id="uQ" placeholder="Cari UID / nama / email"></div>
-  <div class="tw"><table><thead><tr><th>Nama</th><th>Email</th><th>UID</th><th>Rupiah</th><th>CAZO</th><th>Daftar</th><th></th></tr></thead><tbody id="uBody"></tbody></table></div>
-</section>
+    <section id="pUsers" class="hidden">
+      <div class="search-row"><input id="userSearch" placeholder="🔍 Cari UID / nama / email" oninput="renderUsers()" style="flex:1"></div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>UID</th><th>Nama</th><th>Email</th><th>Rupiah</th><th>CAZO</th></tr></thead>
+        <tbody id="userBody"><tr><td colspan="5" class="empty">Memuat...</td></tr></tbody></table>
+      </div>
+    </section>
 
-<section class="sec" id="s-txs">
-  <div class="top"><h2>Transaksi Beli / Jual / Deposit</h2></div>
-  <div class="tools">
-    <input id="tQ" placeholder="Cari UID / ID transaksi / referensi">
-    <select id="tT"><option value="">Semua jenis</option><option>buy</option><option>sell</option><option>deposit</option></select>
-    <input type="date" id="tFrom" style="min-width:0"><input type="date" id="tTo" style="min-width:0">
-  </div>
-  <div class="tw"><table><thead><tr><th>Waktu</th><th>Jenis</th><th>UID</th><th>Jumlah CAZO</th><th>Harga</th><th>Nominal</th><th>Referensi</th><th>Status</th></tr></thead><tbody id="tBody"></tbody></table></div>
-</section>
+    <section id="pTx" class="hidden">
+      <div class="search-row"><input id="txSearch" placeholder="🔍 Cari ID transaksi / UID" oninput="renderTx()" style="flex:1"></div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>ID</th><th>UID</th><th>Tipe</th><th>Nominal</th><th>Harga</th><th>Qty</th><th>Status</th></tr></thead>
+        <tbody id="txBody"><tr><td colspan="7" class="empty">Memuat...</td></tr></tbody></table>
+      </div>
+    </section>
 
-<section class="sec" id="s-chart">
-  <div class="top"><h2>Grafik harga CAZO</h2><select id="cIv"><option>1m</option><option selected>5m</option><option>15m</option><option>1h</option><option>1d</option></select></div>
-  <div class="card"><div id="chart"></div></div>
-  <h3 style="margin:20px 0 8px">Riwayat candle (read-only)</h3>
-  <div class="tw"><table><thead><tr><th>Waktu</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Vol CAZO</th><th>Trx</th></tr></thead><tbody id="cBody"></tbody></table></div>
-  <p class="mono" style="margin-top:8px">Candle dibentuk server dari transaksi yang tervalidasi. Admin tidak dapat mengubahnya.</p>
-</section>
+    <section id="pMarket" class="hidden">
+      <div id="chartContainer"></div>
+      <div class="card">
+        <h3 style="font-size:.95rem;margin-bottom:12px">⚙️ Parameter Mekanisme Harga</h3>
+        <div class="frow">
+          <label class="flabel">Harga CAZO Saat Ini (Rp)</label>
+          <input class="finput" id="cfgPrice" type="number" step="1" placeholder="500">
+          <p style="font-size:.72rem;color:var(--muted);margin-top:6px">Ubah harga manual jika diperlukan. Perubahan dibatasi 5%-50% per operasi oleh Security Rules.</p>
+        </div>
+        <button class="btn btn-primary" onclick="savePrice()">💾 Simpan Harga</button>
+        <p id="priceMsg" style="margin-top:10px;font-size:.8rem;color:var(--muted)"></p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:.95rem;margin-bottom:12px">🔄 Reset Volume (Hati-hati)</h3>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Mereset volume beli/jual ke 0. Tidak menghapus transaksi. Gunakan hanya jika statistik tidak akurat.</p>
+        <button class="btn btn-danger" onclick="resetVolumes()">🔄 Reset Volume</button>
+      </div>
+    </section>
 
-<section class="sec" id="s-set">
-  <div class="top"><h2>Mekanisme Harga &amp; Batas</h2></div>
-  <div class="card">
-    <p class="mono" style="margin-bottom:12px">Aturan CAZO: tekanan beli &gt; jual → harga turun; jual &gt; beli → naik. Perubahan = −k × (beli−jual)/(beli+jual+L), dibatasi per menit. Perubahan parameter dicatat di log admin dan hanya berlaku untuk transaksi berikutnya.</p>
-    <div class="f" id="setForm"></div>
-    <button class="btn p" id="setSave" style="margin-top:14px">Simpan pengaturan</button>
-  </div>
-</section>
-
-<section class="sec" id="s-ann">
-  <div class="top"><h2>Pengumuman</h2></div>
-  <div class="card f" style="grid-template-columns:1fr"><div><label>Teks pengumuman (maks 400 karakter, kosongkan untuk menghapus)</label><textarea id="annText" rows="3" maxlength="400"></textarea></div>
-  <div><button class="btn p" id="annGo">Publikasikan</button> <button class="btn" id="annClear">Hapus pengumuman</button></div></div>
-</section>
-
-<section class="sec" id="s-logs">
-  <div class="top"><h2>Log Aktivitas Admin</h2></div>
-  <div class="tools"><input id="lQ" placeholder="Cari aksi / target / UID admin"></div>
-  <div class="tw"><table><thead><tr><th>Waktu</th><th>Admin</th><th>Aksi</th><th>Target</th><th>Detail</th></tr></thead><tbody id="lBody"></tbody></table></div>
-</section>
-
-<section class="sec" id="s-health">
-  <div class="top"><h2>Status Layanan</h2></div>
-  <div class="cards">
-    <div class="card"><span>Koneksi Firebase Database</span><b id="hConn">—</b></div>
-    <div class="card"><span>Backend (Cloud Functions)</span><b id="hFn">—</b></div>
-    <div class="card"><span>Pembaruan harga terakhir</span><b id="hUpd">—</b></div>
-    <div class="card"><span>Pasar diinisialisasi</span><b id="hInit">—</b></div>
-  </div>
-  <button class="btn" id="hPing">Uji backend</button> <button class="btn p hidden" id="hInitBtn">Inisialisasi pasar (harga Rp500)</button>
-</section>
-</main>
+    <section id="pLogs" class="hidden">
+      <div class="card" id="logList"><div class="empty">Memuat log...</div></div>
+    </section>
+  </main>
 </div>
 
-<div class="modal hidden" id="modal"><div id="mBox"></div></div>
-<div id="toast"></div>
+<div class="modal" id="depModal">
+  <div class="modal-card">
+    <h3>Detail Deposit</h3>
+    <div id="depModalBody"></div>
+    <div class="modal-actions" id="depModalActions"></div>
+  </div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue, get, query, limitToLast, orderByChild } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
+import { getDatabase, ref, onValue, get, set, update, push, runTransaction, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const app = initializeApp({
-  apiKey: "AIzaSyCHr0eemIkfHNFDUkSaFDklp_c1OgmSnl8",
-  authDomain: "mybro-9ba5f.firebaseapp.com",
-  databaseURL: "https://mybro-9ba5f-default-rtdb.firebaseio.com/",
-  projectId: "mybro-9ba5f"
-});
-const db = getDatabase(app), auth = getAuth(app), fns = getFunctions(app, "asia-southeast1");
-const call = (n) => httpsCallable(fns, n);
-const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const rp = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID", { maximumFractionDigits: 2 });
-const qf = (n) => Number(n || 0).toLocaleString("id-ID", { maximumFractionDigits: 6 });
-const dt = (t) => t ? new Date(t).toLocaleString("id-ID") : "—";
-const short = (s) => s ? s.slice(0, 8) + "…" : "";
-function toast(m, e) { const t = $("#toast"); t.textContent = m; t.className = "show" + (e ? " err" : ""); clearTimeout(toast.t); toast.t = setTimeout(() => t.className = "", 3500); }
-const chip = (s) => { const m = { waiting_payment: ["Menunggu bayar", "wait"], awaiting_verification: ["Menunggu verifikasi", "wait"], crediting: ["Diproses", "wait"], approved: ["Disetujui", "ok"], rejected: ["Ditolak", "bad"], completed: ["Berhasil", "ok"], failed: ["Gagal", "bad"], pending: ["Pending", "wait"] }[s] || [s, ""]; return `<span class="chip ${m[1]}">${m[0]}</span>`; };
-
-let D = { users: {}, wallets: {}, deposits: {}, feed: {}, logs: {}, state: null, settings: {} }, unsubs = [], me = null;
-
-/* ---- Gate ---- */
-const provider = new GoogleAuthProvider();
-$("#gLogin").onclick = async () => { try { await signInWithPopup(auth, provider); } catch (e) { if (e.code === "auth/popup-blocked") signInWithRedirect(auth, provider); else toast(e.message, true); } };
-$("#gOut").onclick = $("#out").onclick = () => signOut(auth);
-getRedirectResult(auth).catch(() => {});
-onAuthStateChanged(auth, async (u) => {
-  unsubs.forEach((x) => x()); unsubs = []; me = null;
-  $("#shell").classList.add("hidden"); $("#gate").classList.remove("hidden");
-  $("#gLogin").classList.toggle("hidden", !!u); $("#gOut").classList.toggle("hidden", !u);
-  if (!u) { $("#gmsg").textContent = "Masuk dengan akun Google administrator."; $("#gUid").textContent = ""; return; }
-  $("#gmsg").textContent = "Memeriksa hak akses..."; $("#gUid").textContent = "UID: " + u.uid;
-  let isAdmin = false;
-  try { isAdmin = (await get(ref(db, `admins/${u.uid}`))).val() === true; } catch (e) {}
-  if (!isAdmin) { $("#gmsg").textContent = "Akun ini bukan administrator. (Pemeriksaan sebenarnya dilakukan oleh Security Rules & backend.)"; return; }
-  me = u; $("#meMail").textContent = u.email; $("#gate").classList.add("hidden"); $("#shell").classList.remove("hidden");
-  start();
-});
-
-/* ---- Nav ---- */
-$("aside").onclick = (e) => { const b = e.target.closest("button[data-s]"); if (!b) return; $$("aside button").forEach((x) => x.classList.toggle("on", x === b)); $$(".sec").forEach((x) => x.classList.toggle("on", x.id === "s-" + b.dataset.s)); if (b.dataset.s === "chart") { watchCandles(); } };
-
-/* ---- Data ---- */
-function start() {
-  const w = (path, key, q) => unsubs.push(onValue(q || ref(db, path), (s) => { D[key] = s.val() || {}; renderAll(); }, (e) => toast(`Gagal membaca ${path}: ${e.code}`, true)));
-  w("users", "users"); w("wallets", "wallets"); w("deposits", "deposits");
-  w("txFeed", "feed", query(ref(db, "txFeed"), orderByChild("createdAt"), limitToLast(200)));
-  w("adminLogs", "logs", query(ref(db, "adminLogs"), orderByChild("createdAt"), limitToLast(150)));
-  w("market/cazo/state", "state"); w("market/cazo/settings", "settings");
-  unsubs.push(onValue(ref(db, ".info/connected"), (s) => { $("#hConn").innerHTML = `<span class="pill" style="background:${s.val() ? "var(--ok)" : "var(--bad)"}"></span>${s.val() ? "Terhubung" : "Terputus"}`; }));
-  unsubs.push(onValue(ref(db, "announcements/latest"), (s) => { $("#annText").value = s.val()?.text || ""; }));
-}
-const allDeps = () => Object.entries(D.deposits).flatMap(([uid, o]) => Object.values(o || {}).map((d) => ({ ...d, uid: d.uid || uid }))).sort((a, b) => b.createdAt - a.createdAt);
-const nameOf = (uid) => D.users[uid]?.displayName || D.users[uid]?.email || short(uid);
-
-function renderAll() { renderDash(); renderDeps(); renderUsers(); renderTxs(); renderLogs(); renderSettings(); renderHealth(); }
-function renderDash() {
-  $("#kPrice").textContent = rp(D.state?.price ?? 500);
-  $("#kUsers").textContent = Object.keys(D.users).length;
-  $("#kRp").textContent = rp(Object.values(D.wallets).reduce((a, w) => a + (w.rupiahBalance || 0), 0));
-  $("#kCz").textContent = qf(Object.values(D.wallets).reduce((a, w) => a + (w.cazoBalance || 0), 0));
-  $("#kPend").textContent = allDeps().filter((d) => d.status === "awaiting_verification").length;
-  $("#kTx").textContent = Object.keys(D.feed).length;
-}
-function renderDeps() {
-  const q = $("#dQ").value.trim().toLowerCase(), st = $("#dSt").value;
-  const f0 = $("#dFrom").value ? new Date($("#dFrom").value).getTime() : 0, f1 = $("#dTo").value ? new Date($("#dTo").value).getTime() + 864e5 : Infinity;
-  const list = allDeps().filter((d) => (!st || d.status === st) && d.createdAt >= f0 && d.createdAt < f1 && (!q || [d.uid, d.id, d.reference].some((x) => String(x).toLowerCase().includes(q))));
-  $("#dBody").innerHTML = list.map((d) => `<tr><td>${dt(d.createdAt)}</td><td>${esc(nameOf(d.uid))}<div class="mono">${esc(d.uid)}</div></td><td><b>${rp(d.amount)}</b></td><td class="mono">${esc(d.reference)}</td><td>${chip(d.status)}</td><td>${d.hasProof ? "Ada" : "—"}</td><td><button class="btn sm p" data-d="${esc(d.uid)}|${esc(d.id)}">Detail</button></td></tr>`).join("") || '<tr><td colspan="7">Tidak ada data.</td></tr>';
-  $("#vBody").innerHTML = allDeps().filter((d) => d.reviewedBy).sort((a, b) => (b.reviewedAt || 0) - (a.reviewedAt || 0)).map((d) => `<tr><td>${dt(d.reviewedAt)}</td><td class="mono">${esc(d.reference)}</td><td>${rp(d.amount)}</td><td>${chip(d.status)}</td><td class="mono">${short(d.reviewedBy)}</td><td>${esc(d.note || "")}</td></tr>`).join("") || '<tr><td colspan="6">Belum ada.</td></tr>';
-}
-["#dQ", "#dSt", "#dFrom", "#dTo"].forEach((s) => $(s).oninput = renderDeps);
-function renderUsers() {
-  const q = $("#uQ").value.trim().toLowerCase();
-  $("#uBody").innerHTML = Object.entries(D.users).filter(([uid, u]) => !q || [uid, u.displayName, u.email].some((x) => String(x || "").toLowerCase().includes(q))).sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0)).map(([uid, u]) => { const w = D.wallets[uid] || {}; return `<tr><td>${esc(u.displayName)}</td><td>${esc(u.email)}</td><td class="mono">${esc(uid)}</td><td>${rp(w.rupiahBalance)}</td><td>${qf(w.cazoBalance)}</td><td>${dt(u.createdAt)}</td><td><button class="btn sm" data-u="${esc(uid)}">Transaksi</button></td></tr>`; }).join("") || '<tr><td colspan="7">Tidak ada.</td></tr>';
-}
-$("#uQ").oninput = renderUsers;
-function renderTxs() {
-  const q = $("#tQ").value.trim().toLowerCase(), ty = $("#tT").value;
-  const f0 = $("#tFrom").value ? new Date($("#tFrom").value).getTime() : 0, f1 = $("#tTo").value ? new Date($("#tTo").value).getTime() + 864e5 : Infinity;
-  const list = Object.entries(D.feed).map(([id, t]) => ({ id, ...t })).filter((t) => (!ty || t.type === ty) && t.createdAt >= f0 && t.createdAt < f1 && (!q || [t.uid, t.id, t.reference].some((x) => String(x || "").toLowerCase().includes(q)))).sort((a, b) => b.createdAt - a.createdAt);
-  $("#tBody").innerHTML = list.map((t) => `<tr><td>${dt(t.createdAt)}</td><td>${esc(t.type)}</td><td class="mono">${esc(short(t.uid))}</td><td>${t.type === "deposit" ? "—" : qf(t.quantity)}</td><td>${t.type === "deposit" ? "—" : rp(t.unitPrice)}</td><td>${rp(t.amount)}</td><td class="mono">${esc(t.reference)}</td><td>${chip(t.status)}</td></tr>`).join("") || '<tr><td colspan="8">Tidak ada data.</td></tr>';
-}
-["#tQ", "#tT", "#tFrom", "#tTo"].forEach((s) => $(s).oninput = renderTxs);
-function renderLogs() {
-  const q = $("#lQ").value.trim().toLowerCase();
-  $("#lBody").innerHTML = Object.values(D.logs).sort((a, b) => b.createdAt - a.createdAt).filter((l) => !q || JSON.stringify(l).toLowerCase().includes(q)).map((l) => `<tr><td>${dt(l.createdAt)}</td><td class="mono">${esc(short(l.adminUid))}</td><td>${esc(l.action)}</td><td class="mono">${esc(l.targetId)}</td><td class="mono" style="white-space:normal">${esc(JSON.stringify(l.meta || {}))}</td></tr>`).join("") || '<tr><td colspan="5">Belum ada log.</td></tr>';
-}
-$("#lQ").oninput = renderLogs;
-$("#uBody").onclick = (e) => { const b = e.target.closest("[data-u]"); if (!b) return; $("#tQ").value = b.dataset.u; renderTxs(); $('aside [data-s="txs"]').click(); };
-
-/* ---- Deposit detail & review ---- */
-$("#dBody").onclick = async (e) => {
-  const b = e.target.closest("[data-d]"); if (!b) return;
-  const [uid, id] = b.dataset.d.split("|"); const d = D.deposits[uid]?.[id]; if (!d) return;
-  const canReview = d.status === "awaiting_verification" || d.status === "crediting" || d.status === "waiting_payment";
-  $("#mBox").innerHTML = `<h3 style="margin-bottom:6px">Detail deposit</h3>
-  <div class="kv"><span>Pengguna</span><div>${esc(nameOf(uid))}<div class="mono">${esc(uid)}</div></div><span>Referensi</span><div class="mono">${esc(d.reference)}</div><span>Nominal</span><b>${rp(d.amount)}</b><span>Dibuat</span><div>${dt(d.createdAt)}</div><span>Status</span><div>${chip(d.status)}</div></div>
-  <div id="proof" class="mono">${d.hasProof ? "Memuat bukti..." : "Pengguna tidak mengunggah bukti."}</div>
-  ${canReview ? `<textarea id="rNote" rows="2" maxlength="300" placeholder="Catatan (wajib diisi jika menolak)" style="width:100%;margin-top:10px;background:#0f121a;border:1px solid var(--line);border-radius:8px;padding:8px"></textarea>
-  <p class="mono" style="margin-top:8px">Pastikan dana benar-benar masuk di rekening/QRIS dengan nominal yang sama sebelum menyetujui. Kredit saldo hanya terjadi satu kali.</p>
-  <div style="display:flex;gap:8px;margin-top:12px"><button class="btn ok" id="rOk">Setujui &amp; kreditkan</button><button class="btn bad" id="rNo">Tolak</button><button class="btn" id="rX">Tutup</button></div>` : '<button class="btn" id="rX" style="margin-top:12px">Tutup</button>'}`;
-  $("#modal").classList.remove("hidden"); $("#rX").onclick = closeM;
-  if (d.hasProof) { try { const s = await get(ref(db, `depositProofs/${uid}/${id}`)); $("#proof").innerHTML = s.val()?.image ? `<img src="${s.val().image}" alt="Bukti pembayaran">` : "Bukti tidak ditemukan."; } catch (x) { $("#proof").textContent = "Gagal memuat bukti: " + x.code; } }
-  if (!canReview) return;
-  const act = (decision) => async () => {
-    const note = $("#rNote").value.trim();
-    if (decision === "reject" && !note) return toast("Isi catatan alasan penolakan.", true);
-    if (!confirm(decision === "approve" ? `Kreditkan ${rp(d.amount)} ke pengguna ini? Tindakan tidak dapat dibatalkan.` : "Tolak deposit ini?")) return;
-    $("#rOk")?.setAttribute("disabled", ""); $("#rNo").setAttribute("disabled", "");
-    try { const r = (await call("reviewDeposit")({ uid, depositId: id, decision, note })).data; toast(r.status === "approved" ? "Deposit disetujui & dikreditkan." : "Deposit ditolak."); closeM(); }
-    catch (x) { toast(x.message, true); $("#rOk")?.removeAttribute("disabled"); $("#rNo").removeAttribute("disabled"); }
-  };
-  $("#rOk").onclick = act("approve"); $("#rNo").onclick = act("reject");
+const cfg = {
+  apiKey:"AIzaSyCHr0eemIkfHNFDUkSaFDklp_c1OgmSnl8",
+  authDomain:"mybro-9ba5f.firebaseapp.com",
+  databaseURL:"https://mybro-9ba5f-default-rtdb.firebaseio.com/",
+  projectId:"mybro-9ba5f"
 };
-function closeM() { $("#modal").classList.add("hidden"); }
-$("#modal").onclick = (e) => { if (e.target.id === "modal") closeM(); };
+const app = initializeApp(cfg);
+const db = getDatabase(app);
+const auth = getAuth(app);
 
-/* ---- Chart ---- */
-let chart, cs, curUnsub = null;
-function watchCandles() {
-  if (!chart) {
-    chart = LightweightCharts.createChart($("#chart"), { autoSize: true, layout: { background: { color: "transparent" }, textColor: "#8b94a7" }, grid: { vertLines: { color: "#1d2230" }, horzLines: { color: "#1d2230" } }, timeScale: { timeVisible: true, borderColor: "#262c39" }, rightPriceScale: { borderColor: "#262c39" } });
-    cs = chart.addCandlestickSeries({ upColor: "#3ddc97", downColor: "#ff5d73", borderVisible: false, wickUpColor: "#3ddc97", wickDownColor: "#ff5d73" });
+const $ = id => document.getElementById(id);
+const fmtRp = n => 'Rp' + Math.round(Number(n)||0).toLocaleString('id-ID');
+const fmtNum = n => Number(n||0).toLocaleString('id-ID',{maximumFractionDigits:2});
+const fmtTime = t => t ? new Date(t).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+
+let user = null, deposits = [], users = [], txs = [], wallets = {}, lastPublicTxs = [], chart, candleS;
+
+window.login = async () => {
+  try {
+    const p = new GoogleAuthProvider();
+    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) await signInWithRedirect(auth,p);
+    else await signInWithPopup(auth,p);
+  } catch(e){ $('gateMsg').textContent = e.message; }
+};
+window.logout = () => signOut(auth);
+
+onAuthStateChanged(auth, async u => {
+  if (!u){ $('gate').style.display='flex'; $('layout').classList.remove('show'); return; }
+  try {
+    const snap = await get(ref(db,`admins/${u.uid}`));
+    if (!snap.exists() || snap.val()!==true){
+      $('gateMsg').textContent = '❌ Akun ini bukan administrator.';
+      await signOut(auth); return;
+    }
+  } catch(e){
+    $('gateMsg').textContent = 'Gagal verifikasi admin.';
+    await signOut(auth); return;
   }
-  if (curUnsub) curUnsub();
-  curUnsub = onValue(query(ref(db, `market/cazo/candles/${$("#cIv").value}`), limitToLast(300)), (s) => {
-    const arr = Object.entries(s.val() || {}).map(([t, c]) => ({ t: +t, c })).sort((a, b) => a.t - b.t);
-    cs.setData(arr.map(({ t, c }) => ({ time: t, open: c.o, high: c.h, low: c.l, close: c.c }))); chart.timeScale().fitContent();
-    $("#cBody").innerHTML = arr.slice().reverse().slice(0, 100).map(({ t, c }) => `<tr><td>${dt(t * 1000)}</td><td>${c.o}</td><td>${c.h}</td><td>${c.l}</td><td>${c.c}</td><td>${qf(c.v)}</td><td>${c.n}</td></tr>`).join("") || '<tr><td colspan="7">Belum ada candle. Menunggu transaksi pertama.</td></tr>';
+  user = u;
+  $('gate').style.display = 'none';
+  $('layout').classList.add('show');
+  $('adminInfo').textContent = u.email || u.uid.slice(0,12);
+  loadAll();
+});
+
+window.showPanel = p => {
+  ['dash','deposits','users','tx','market','logs'].forEach(x=>$('p'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('hidden', x!==p));
+  document.querySelectorAll('.sb-btn[data-p]').forEach(b=>b.classList.toggle('active', b.dataset.p===p));
+  $('panelTitle').textContent = {dash:'Dashboard',deposits:'Verifikasi Deposit',users:'Pengguna',tx:'Transaksi',market:'Pengaturan Pasar',logs:'Log Admin'}[p];
+};
+
+function loadAll(){
+  onValue(ref(db,'market/cazo'), s=>{
+    const d = s.val()||{};
+    $('sPrice').textContent = fmtRp(d.price||500);
+    $('cfgPrice').value = d.price || 500;
+    renderChart();
+  });
+  $('health').innerHTML = '✅ <b style="color:var(--neon)">Terhubung</b> ke Firebase Realtime Database.';
+
+  onValue(query(ref(db,'deposits'), orderByChild('createdAt'), limitToLast(200)), s=>{
+    deposits = []; s.forEach(c=>deposits.push({id:c.key,...c.val()}));
+    deposits.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    $('sPending').textContent = deposits.filter(d=>d.status==='pending').length;
+    renderDeposits();
+  });
+
+  onValue(ref(db,'users'), s=>{
+    users = []; s.forEach(c=>users.push({uid:c.key,...c.val()}));
+    $('sUsers').textContent = users.length;
+    renderUsers();
+  });
+
+  onValue(ref(db,'wallets'), s=>{ wallets = s.val()||{}; renderUsers(); });
+
+  onValue(query(ref(db,'transactions'), orderByChild('createdAt'), limitToLast(200)), s=>{
+    txs = []; s.forEach(c=>txs.push({id:c.key,...c.val()}));
+    txs.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    $('sTx').textContent = txs.length;
+    renderTx();
+  });
+
+  onValue(query(ref(db,'adminLogs'), orderByChild('createdAt'), limitToLast(50)), s=>{
+    const logs=[]; s.forEach(c=>logs.push({id:c.key,...c.val()}));
+    logs.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    $('logList').innerHTML = logs.length
+      ? logs.map(l=>`<div class="logitem"><span><strong>${l.action}</strong> · target <code class="mono">${(l.targetId||'—').slice(0,12)}</code></span><span>${fmtTime(l.createdAt)}</span></div>`).join('')
+      : '<div class="empty">Belum ada log</div>';
+  });
+
+  onValue(query(ref(db,'publicTransactions'), orderByChild('createdAt'), limitToLast(500)), s=>{
+    lastPublicTxs = []; s.forEach(c=>lastPublicTxs.push(c.val()));
+    lastPublicTxs.sort((a,b)=>a.createdAt-b.createdAt);
+    renderChart();
   });
 }
-$("#cIv").onchange = watchCandles;
 
-/* ---- Settings ---- */
-const SET = [["feePct", "Biaya transaksi (%)"], ["minOrderRp", "Minimal order (Rp)"], ["maxOrderRp", "Maksimal order (Rp)"], ["minDeposit", "Minimal deposit (Rp)"], ["maxDeposit", "Maksimal deposit (Rp)"], ["k", "k — sensitivitas harga (0–1)"], ["maxChangePct", "Batas perubahan harga / menit (%)"], ["liquidity", "L — penyangga likuiditas (Rp)"]];
-const DEF = { feePct: 0.5, minOrderRp: 1000, maxOrderRp: 5000000, minDeposit: 5000, maxDeposit: 50000000, k: 0.05, maxChangePct: 2, liquidity: 50000 };
-$("#setForm").innerHTML = SET.map(([k, l]) => `<div><label>${l}</label><input type="number" step="any" data-k="${k}"></div>`).join("");
-function renderSettings() { const s = { ...DEF, ...D.settings }; $$("#setForm input").forEach((i) => { if (document.activeElement !== i) i.value = s[i.dataset.k]; }); }
-$("#setSave").onclick = async () => {
-  if (!confirm("Simpan pengaturan pasar? Berlaku untuk transaksi berikutnya dan dicatat di log.")) return;
-  const data = {}; $$("#setForm input").forEach((i) => data[i.dataset.k] = Number(i.value));
-  try { await call("updateSettings")(data); toast("Pengaturan disimpan."); } catch (e) { toast(e.message, true); }
-};
-$("#annGo").onclick = async () => { try { await call("postAnnouncement")({ text: $("#annText").value }); toast("Pengumuman diperbarui."); } catch (e) { toast(e.message, true); } };
-$("#annClear").onclick = async () => { if (!confirm("Hapus pengumuman?")) return; try { await call("postAnnouncement")({ text: "" }); toast("Pengumuman dihapus."); } catch (e) { toast(e.message, true); } };
-
-/* ---- Health ---- */
-function renderHealth() {
-  $("#hUpd").textContent = D.state?.lastUpdated ? dt(D.state.lastUpdated) : "Belum ada transaksi";
-  $("#hInit").textContent = D.state ? "Ya" : "Belum"; $("#hInitBtn").classList.toggle("hidden", !!D.state);
+function renderChart(){
+  if (!chart){
+    chart = LightweightCharts.createChart($('chartContainer'),{
+      layout:{background:{color:'#0a0f0d'},textColor:'#657a72',fontFamily:'Inter'},
+      grid:{vertLines:{color:'#1a2521'},horzLines:{color:'#1a2521'}},
+      rightPriceScale:{borderColor:'#1a2521'},
+      timeScale:{borderColor:'#1a2521',timeVisible:true},
+    });
+    candleS = chart.addCandlestickSeries({upColor:'#00ff9d',downColor:'#ff4d6d',borderUpColor:'#00ff9d',borderDownColor:'#ff4d6d',wickUpColor:'#00ff9d',wickDownColor:'#ff4d6d'});
+    new ResizeObserver(()=>chart.applyOptions({width:$('chartContainer').clientWidth,height:$('chartContainer').clientHeight})).observe($('chartContainer'));
+  }
+  if (!lastPublicTxs.length) return;
+  const b = {};
+  lastPublicTxs.forEach(t=>{
+    if(!t.createdAt||!t.unitPrice) return;
+    const k = Math.floor(t.createdAt/300000)*300000;
+    if(!b[k]) b[k] = {time:k/1000,open:t.unitPrice,high:t.unitPrice,low:t.unitPrice,close:t.unitPrice};
+    b[k].high = Math.max(b[k].high,t.unitPrice);
+    b[k].low = Math.min(b[k].low,t.unitPrice);
+    b[k].close = t.unitPrice;
+  });
+  candleS.setData(Object.values(b).sort((a,b)=>a.time-b.time));
+  chart.timeScale().fitContent();
 }
-$("#hPing").onclick = async () => {
-  const t = performance.now();
-  try { await call("ensureUser")(); $("#hFn").innerHTML = `<span class="pill" style="background:var(--ok)"></span>OK (${Math.round(performance.now() - t)} ms)`; }
-  catch (e) { $("#hFn").innerHTML = `<span class="pill" style="background:var(--bad)"></span>${esc(e.code || e.message)}`; }
+
+window.renderDeposits = () => {
+  const q = ($('depSearch').value||'').toLowerCase();
+  const f = $('depFilter').value;
+  const list = deposits.filter(d=>
+    (!f || d.status===f) &&
+    (!q || (d.reference||'').toLowerCase().includes(q) || (d.uid||'').toLowerCase().includes(q) || String(d.amount||'').includes(q))
+  );
+  $('depBody').innerHTML = list.length
+    ? list.map(d=>`<tr>
+        <td><code class="mono">${d.reference||d.id}</code></td>
+        <td><code class="mono">${(d.uid||'').slice(0,10)}…</code></td>
+        <td><b>${fmtRp(d.amount)}</b></td>
+        <td style="color:var(--muted);font-size:.75rem">${fmtTime(d.createdAt)}</td>
+        <td><span class="badge ${d.status}">${d.status}</span></td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="viewDeposit('${d.id}')">Detail</button>
+          ${d.status==='pending'?`
+            <button class="btn btn-primary btn-sm" onclick="approveDeposit('${d.id}')">✓</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectDeposit('${d.id}')">✗</button>`:''}
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" class="empty">Tidak ada deposit</td></tr>';
 };
-$("#hInitBtn").onclick = async () => { if (!confirm("Inisialisasi pasar CAZO dengan harga Rp500?")) return; try { await call("initMarket")(); toast("Pasar diinisialisasi."); } catch (e) { toast(e.message, true); } };
+
+window.viewDeposit = id => {
+  const d = deposits.find(x=>x.id===id);
+  if (!d) return;
+  $('depModalBody').innerHTML = `
+    <div style="font-size:.85rem;line-height:1.9">
+      <div><b>Referensi:</b> <code class="mono">${d.reference||d.id}</code></div>
+      <div><b>UID:</b> <code class="mono">${d.uid}</code></div>
+      <div><b>Nominal:</b> ${fmtRp(d.amount)}</div>
+      <div><b>Status:</b> <span class="badge ${d.status}">${d.status}</span></div>
+      <div><b>Dibuat:</b> ${fmtTime(d.createdAt)}</div>
+      ${d.reviewedAt?`<div><b>Ditinjau:</b> ${fmtTime(d.reviewedAt)}</div>`:''}
+      ${d.reviewedBy?`<div><b>Oleh:</b> <code class="mono">${d.reviewedBy.slice(0,10)}…</code></div>`:''}
+      ${d.rejectReason?`<div><b>Alasan tolak:</b> ${d.rejectReason}</div>`:''}
+    </div>`;
+  $('depModalActions').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeDep()">Tutup</button>
+    ${d.status==='pending'?`
+      <button class="btn btn-primary" onclick="approveDeposit('${d.id}');closeDep()">✓ Setujui</button>
+      <button class="btn btn-danger" onclick="rejectDeposit('${d.id}');closeDep()">✗ Tolak</button>`:''}
+  `;
+  $('depModal').classList.add('open');
+};
+window.closeDep = () => $('depModal').classList.remove('open');
+
+window.approveDeposit = async id => {
+  if (!confirm('Setujui deposit ini? Saldo akan dikreditkan TEPAT SATU KALI.')) return;
+  const dep = deposits.find(d=>d.id===id);
+  if (!dep) return alert('Deposit tidak ditemukan.');
+
+  try {
+    // Step 1: Atomic status change (prevents double-credit)
+    const statusRes = await runTransaction(ref(db,`deposits/${id}/status`), s => {
+      if (s !== 'pending') return; // abort if not pending
+      return 'approved';
+    });
+    if (!statusRes.committed) throw new Error('Deposit sudah diproses.');
+
+    // Step 2: Credit wallet atomically
+    const walletRes = await runTransaction(ref(db,`wallets/${dep.uid}`), w => {
+      w = w || {rupiahBalance:0, cazoBalance:0};
+      w.rupiahBalance = Number(w.rupiahBalance||0) + Number(dep.amount);
+      w.lastTrade = {type:'admin_credit', amount:Number(dep.amount), txId:id, at:Date.now()};
+      return w;
+    });
+    if (!walletRes.committed) throw new Error('Gagal kredit saldo.');
+
+    // Step 3: Update metadata
+    await update(ref(db,`deposits/${id}`), {
+      reviewedAt: Date.now(),
+      reviewedBy: user.uid
+    });
+
+    // Step 4: Log
+    await push(ref(db,'adminLogs'), {
+      adminUid: user.uid, action: 'deposit_approve',
+      targetId: id, createdAt: Date.now()
+    });
+
+    alert('✅ Deposit disetujui.');
+  } catch(e){
+    alert('❌ Gagal: ' + e.message);
+  }
+};
+
+window.rejectDeposit = async id => {
+  const reason = prompt('Alasan penolakan (wajib, min 3 karakter):');
+  if (!reason || reason.trim().length < 3) return alert('Alasan wajib diisi.');
+  try {
+    const res = await runTransaction(ref(db,`deposits/${id}/status`), s => {
+      if (s !== 'pending') return;
+      return 'rejected';
+    });
+    if (!res.committed) throw new Error('Deposit sudah diproses.');
+    await update(ref(db,`deposits/${id}`), {
+      reviewedAt: Date.now(), reviewedBy: user.uid, rejectReason: reason.trim()
+    });
+    await push(ref(db,'adminLogs'), {
+      adminUid: user.uid, action: 'deposit_reject', targetId: id, reason: reason.trim(), createdAt: Date.now()
+    });
+    alert('✅ Deposit ditolak.');
+  } catch(e){ alert('❌ Gagal: ' + e.message); }
+};
+
+window.renderUsers = () => {
+  const q = ($('userSearch').value||'').toLowerCase();
+  const list = users.filter(u => !q || (u.uid||'').toLowerCase().includes(q) || (u.displayName||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
+  $('userBody').innerHTML = list.length
+    ? list.map(u=>{
+      const w = wallets[u.uid]||{};
+      return `<tr>
+        <td><code class="mono">${u.uid.slice(0,12)}…</code></td>
+        <td>${u.displayName||'—'}</td>
+        <td style="color:var(--muted);font-size:.75rem">${u.email||'—'}</td>
+        <td><b>${fmtRp(w.rupiahBalance||0)}</b></td>
+        <td>${fmtNum(w.cazoBalance||0)}</td>
+      </tr>`;
+    }).join('')
+    : '<tr><td colspan="5" class="empty">Tidak ada pengguna</td></tr>';
+};
+
+window.renderTx = () => {
+  const q = ($('txSearch').value||'').toLowerCase();
+  const list = txs.filter(t => !q || (t.id||'').toLowerCase().includes(q) || (t.uid||'').toLowerCase().includes(q));
+  $('txBody').innerHTML = list.length
+    ? list.map(t=>`<tr>
+        <td><code class="mono">${(t.id||'').slice(0,10)}…</code></td>
+        <td><code class="mono">${(t.uid||'').slice(0,8)}…</code></td>
+        <td>${t.type==='buy'?'🟢 Beli':'🔴 Jual'}</td>
+        <td><b>${fmtRp(t.amount)}</b></td>
+        <td>${fmtRp(t.unitPrice)}</td>
+        <td>${fmtNum(t.quantity)}</td>
+        <td><span class="badge ${t.status==='success'?'success':t.status}">${t.status||'—'}</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" class="empty">Tidak ada transaksi</td></tr>';
+};
+
+window.savePrice = async () => {
+  const price = parseFloat($('cfgPrice').value);
+  if (!Number.isFinite(price) || price <= 0){ $('priceMsg').textContent='❌ Harga tidak valid'; $('priceMsg').style.color='var(--danger)'; return; }
+  if (!confirm('Ubah harga CAZO menjadi ' + fmtRp(price) + '?\n\nRules membatasi perubahan 50% per operasi.')) return;
+  try {
+    await update(ref(db,'market/cazo'), {price, lastUpdated: Date.now()});
+    await push(ref(db,'adminLogs'), {
+      adminUid: user.uid, action: 'update_price', targetId: 'market/cazo/price',
+      newValue: price, createdAt: Date.now()
+    });
+    $('priceMsg').textContent='✅ Harga diperbarui'; $('priceMsg').style.color='var(--neon)';
+  } catch(e){
+    $('priceMsg').textContent='❌ '+e.message; $('priceMsg').style.color='var(--danger)';
+  }
+};
+
+window.resetVolumes = async () => {
+  if (!confirm('Reset volume beli & jual ke 0? Transaksi tidak dihapus.')) return;
+  try {
+    await update(ref(db,'market/cazo'), {buyVolume: 0, sellVolume: 0, lastUpdated: Date.now()});
+    await push(ref(db,'adminLogs'), {
+      adminUid: user.uid, action: 'reset_volumes', targetId: 'market/cazo', createdAt: Date.now()
+    });
+    alert('✅ Volume direset.');
+  } catch(e){ alert('❌ ' + e.message); }
+};
 </script>
 </body>
 </html>
