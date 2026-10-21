@@ -95,7 +95,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
   <div class="gatecard">
     <div class="gicon">🔐</div>
     <h1>CAZO Admin</h1>
-    <p>Panel administrator. Hanya UID terdaftar di <code>/admins</code> yang dapat mengakses.</p>
+    <p>Panel administrator. Login dengan Google untuk melanjutkan.</p>
     <button class="gbtn" onclick="login()">Masuk dengan Google</button>
     <p class="gmsg" id="gateMsg"></p>
   </div>
@@ -167,7 +167,6 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
         <div class="frow">
           <label class="flabel">Harga Saat Ini (Rp)</label>
           <input class="finput" id="cfgPrice" type="number" step="1" placeholder="500">
-          <p style="font-size:.72rem;color:var(--muted);margin-top:6px">Admin dapat mengubah harga tanpa batas 5%. User biasa dibatasi ±5%.</p>
         </div>
         <button class="btn btn-primary" onclick="savePrice()">💾 Simpan Harga</button>
         <p id="priceMsg" style="margin-top:10px;font-size:.8rem;color:var(--muted)"></p>
@@ -215,7 +214,6 @@ const fmtTime = t => t ? new Date(t).toLocaleString('id-ID',{day:'2-digit',month
 
 let user = null, deposits = [], users = [], txs = [], wallets = {}, lastPublicTxs = [], chart, candleS;
 
-// === Helper: tulis log aman ===
 async function writeLog(action, targetId, extra = {}) {
   const logRef = push(ref(db, 'adminLogs'));
   await set(logRef, {
@@ -236,22 +234,17 @@ window.login = async () => {
 };
 window.logout = () => signOut(auth);
 
-onAuthStateChanged(auth, async u => {
-  if (!u){ $('gate').style.display='flex'; $('layout').classList.remove('show'); return; }
-  try {
-    const snap = await get(ref(db, `admins/${u.uid}`));
-    if (!snap.exists() || snap.val() !== true){
-      $('gateMsg').textContent = '❌ Akun ini bukan administrator.';
-      await signOut(auth); return;
-    }
-  } catch(e){
-    $('gateMsg').textContent = 'Gagal verifikasi admin: ' + e.message;
-    await signOut(auth); return;
+// ==== LOGIN ADMIN TANPA CEK /admins ====
+onAuthStateChanged(auth, u => {
+  if (!u){
+    $('gate').style.display = 'flex';
+    $('layout').classList.remove('show');
+    return;
   }
   user = u;
   $('gate').style.display = 'none';
   $('layout').classList.add('show');
-  $('adminInfo').textContent = u.email || u.uid.slice(0,12);
+  $('adminInfo').textContent = u.email || u.uid.slice(0, 12);
   loadAll();
 });
 
@@ -388,14 +381,12 @@ window.approveDeposit = async id => {
   if (!dep) return alert('Deposit tidak ditemukan.');
 
   try {
-    // Step 1: Atomic status change — abort jika sudah bukan pending
     const statusRes = await runTransaction(ref(db, `deposits/${id}/status`), s => {
-      if (s !== 'pending') return;  // abort
+      if (s !== 'pending') return;
       return 'approved';
     });
     if (!statusRes.committed) throw new Error('Deposit sudah diproses sebelumnya.');
 
-    // Step 2: Atomic wallet credit
     const walletRes = await runTransaction(ref(db, `wallets/${dep.uid}`), w => {
       w = w || { rupiahBalance: 0, cazoBalance: 0 };
       w.rupiahBalance = Number(w.rupiahBalance || 0) + Number(dep.amount);
@@ -410,18 +401,15 @@ window.approveDeposit = async id => {
       return w;
     });
     if (!walletRes.committed) {
-      // Rollback status agar tidak stuck
       await set(ref(db, `deposits/${id}/status`), 'pending');
       throw new Error('Gagal kredit saldo — status dikembalikan ke pending.');
     }
 
-    // Step 3: Metadata
     await update(ref(db, `deposits/${id}`), {
       reviewedAt: Date.now(),
       reviewedBy: user.uid
     });
 
-    // Step 4: Log
     await writeLog('deposit_approve', id, { amount: dep.amount, targetUid: dep.uid });
 
     alert('✅ Deposit disetujui.');
