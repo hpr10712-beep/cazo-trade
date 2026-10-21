@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070b0a">
+<title>CAZO — Trading Aset Digital</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root{--bg:#070b0a;--card:#0f1815;--card2:#13201c;--line:#1c2d27;--g:#00ff9d;--g2:#0fd98a;--red:#ff4d6d;--txt:#e8f5ef;--mut:#7f9a90;--gold:#ffd54a;--r:18px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:radial-gradient(1200px 600px at 80% -10%,#0b2a20 0,transparent 60%),var(--bg);color:var(--txt);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;padding-bottom:78px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0}
+.hidden{display:none!important}
+/* loader */
+#loader{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .6s,visibility .6s}
+#loader.out{opacity:0;visibility:hidden}
+#loader svg{width:150px;animation:pop .8s cubic-bezier(.2,1.6,.4,1) both,float 2.6s ease-in-out .8s infinite}
+@keyframes pop{from{transform:scale(.2) translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes float{50%{transform:translateY(-8px)}}
+.eye{transform-origin:center;transform-box:fill-box;animation:blink 3.4s infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+.logo{font-weight:900;letter-spacing:.18em;font-size:28px;color:var(--g);text-shadow:0 0 22px #00ff9d66}
+.bar{width:220px;height:6px;border-radius:9px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--g2),var(--g));transition:width .4s}
+#lstatus{color:var(--mut);font-size:14px;min-height:20px;text-align:center;padding:0 20px}
+#lerr{display:none;text-align:center}
+#lerr p{color:var(--red);font-size:14px;margin-bottom:10px;max-width:300px}
+/* layout */
+.app{display:grid;grid-template-columns:1fr;max-width:1280px;margin:auto}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#070b0ae6;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header .mini{width:34px}
+header .brand{font-weight:900;letter-spacing:.14em;color:var(--g)}
+header .sp{flex:1}
+.avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--g2)}
+.btn{background:var(--card2);border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-weight:600;transition:.2s}
+.btn:hover{border-color:var(--g2)}
+.btn.p{background:linear-gradient(135deg,var(--g2),var(--g));color:#04170f;border:0}
+.btn.d{background:var(--red);color:#fff;border:0}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;background:#0a1210f2;backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav button{flex:1;background:none;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;padding:6px 0;border-radius:12px}
+nav button .ic{font-size:20px}
+nav button.on{color:var(--g)}
+main{padding:14px;display:grid;gap:14px}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:0 10px 30px #0006}
+.card h3{font-size:13px;color:var(--mut);font-weight:600;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase}
+.big{font-size:30px;font-weight:800}
+.up{color:var(--g)}.down{color:var(--red)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat b{display:block;font-size:17px;margin-top:2px}
+.stat span{font-size:12px;color:var(--mut)}
+#banner{background:#2a2410;border:1px solid #5b4b12;color:var(--gold);padding:10px 14px;border-radius:12px;font-size:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{background:var(--card);border:1px solid var(--line);color:var(--mut);padding:6px 12px;border-radius:10px;font-size:13px}
+.tabs button.on{color:#04170f;background:var(--g);border-color:var(--g)}
+#chartWrap{position:relative}
+#chart{height:340px;width:100%}
+#tip{position:absolute;left:8px;top:6px;z-index:5;font-size:12px;color:var(--mut);pointer-events:none;background:#0a1210cc;padding:4px 8px;border-radius:8px}
+#empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mut);background:#0b1311cc;border-radius:12px;z-index:4}
+.press{height:12px;border-radius:9px;background:var(--red);overflow:hidden;margin:8px 0}
+.press i{display:block;height:100%;background:var(--g);transition:width .5s}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+input,select{width:100%;background:#0a1210;border:1px solid var(--line);padding:12px;border-radius:12px;outline:none}
+input:focus,select:focus{border-color:var(--g2)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.seg button{padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--mut);font-weight:700}
+.seg button.on.buy{background:var(--g);color:#04170f}
+.seg button.on.sell{background:var(--red);color:#fff}
+.sum{background:#0a1210;border:1px dashed var(--line);border-radius:12px;padding:12px;margin:12px 0;display:grid;gap:6px}
+.note{font-size:12px;color:var(--mut);line-height:1.5;margin-top:8px}
+.warn{background:#2a1214;border:1px solid #5b2229;color:#ffb3c0;padding:10px;border-radius:12px;font-size:13px;margin:10px 0;line-height:1.5}
+.qris{width:100%;max-width:300px;display:block;margin:10px auto;border-radius:14px;background:#fff}
+.tx{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.tx:last-child{border:0}
+.chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;background:#1c2d27;color:var(--mut)}
+.chip.ok{background:#0b3a28;color:var(--g)}.chip.bad{background:#3a1119;color:var(--red)}.chip.wait{background:#3a300b;color:var(--gold)}
+.dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:#1c2d27}
+.dot.buy{background:#0b3a28;color:var(--g)}.dot.sell{background:#3a1119;color:var(--red)}.dot.deposit{background:#3a300b;color:var(--gold)}
+.modal{position:fixed;inset:0;z-index:60;background:#000b;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.modal>div{background:var(--card);border:1px solid var(--line);border-radius:22px 22px 0 0;padding:20px;width:100%;max-width:460px;max-height:90vh;overflow:auto}
+#toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:90;background:#13201c;border:1px solid var(--g2);padding:10px 16px;border-radius:12px;font-size:14px;max-width:90vw;opacity:0;pointer-events:none;transition:.3s}
+#toast.show{opacity:1}#toast.err{border-color:var(--red)}
+.view{display:none}.view.on{display:grid;gap:14px;animation:fade .35s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.filters{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+code{background:#0a1210;padding:2px 6px;border-radius:6px;color:var(--g)}
+@media(min-width:900px){
+ body{padding-bottom:0}
+ .app{grid-template-columns:200px 1fr}
+ header{grid-column:1/3}
+ nav{position:sticky;top:60px;align-self:start;height:calc(100vh - 60px);flex-direction:column;justify-content:flex-start;gap:4px;padding:14px 10px;border:0;border-right:1px solid var(--line);background:none}
+ nav button{flex:none;flex-direction:row;gap:10px;font-size:14px;padding:12px;justify-content:flex-start}
+ #chart{height:440px}
+ .modal{align-items:center}.modal>div{border-radius:22px}
+ #toast{bottom:30px}
+ .cols{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loader">
+  <svg viewBox="0 0 120 124" aria-label="Maskot CAZO">
+    <ellipse cx="60" cy="116" rx="32" ry="6" fill="#000" opacity=".35"/>
+    <line x1="60" y1="24" x2="60" y2="9" stroke="#00ff9d" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="60" cy="8" r="6.5" fill="#ffd54a"/>
+    <rect x="20" y="24" width="80" height="84" rx="38" fill="#0fd98a"/>
+    <rect x="29" y="34" width="62" height="46" rx="23" fill="#0b1f1a"/>
+    <ellipse class="eye" cx="46" cy="55" rx="7" ry="9.5" fill="#eafff6"/>
+    <ellipse class="eye" cx="74" cy="55" rx="7" ry="9.5" fill="#eafff6"/>
+    <circle cx="48" cy="52" r="2.6" fill="#0b1f1a"/><circle cx="76" cy="52" r="2.6" fill="#0b1f1a"/>
+    <path d="M50 69q10 8 20 0" stroke="#eafff6" fill="none" stroke-width="3.2" stroke-linecap="round"/>
+    <circle cx="60" cy="94" r="9" fill="#ffd54a"/><text x="60" y="98.5" font-size="12" font-weight="900" text-anchor="middle" fill="#7a5a00" font-family="sans-serif">C</text>
+    <ellipse cx="17" cy="78" rx="8" ry="11" fill="#0fd98a" transform="rotate(20 17 78)"/>
+    <ellipse cx="103" cy="78" rx="8" ry="11" fill="#0fd98a" transform="rotate(-20 103 78)"/>
+  </svg>
+  <div class="logo">CAZO</div>
+  <div class="bar"><i id="lbar"></i></div>
+  <div id="lstatus">Menyiapkan pasar CAZO...</div>
+  <div id="lerr"><p id="lerrmsg"></p><button class="btn p" id="lretry">Coba lagi</button></div>
+</div>
+
+<div class="app">
+<header>
+  <svg class="mini" viewBox="0 0 120 124"><rect x="20" y="24" width="80" height="84" rx="38" fill="#0fd98a"/><rect x="29" y="34" width="62" height="46" rx="23" fill="#0b1f1a"/><ellipse cx="46" cy="55" rx="7" ry="9.5" fill="#eafff6"/><ellipse cx="74" cy="55" rx="7" ry="9.5" fill="#eafff6"/><path d="M50 69q10 8 20 0" stroke="#eafff6" fill="none" stroke-width="3.2" stroke-linecap="round"/><circle cx="60" cy="8" r="7" fill="#ffd54a"/><line x1="60" y1="24" x2="60" y2="12" stroke="#00ff9d" stroke-width="4"/></svg>
+  <span class="brand">CAZO</span><span class="sp"></span>
+  <button class="btn p sm" id="loginBtn">Masuk dengan Google</button>
+  <div id="profile" class="hidden" style="display:flex;align-items:center;gap:8px">
+    <img class="avatar" id="pfoto" alt="" referrerpolicy="no-referrer">
+    <div style="line-height:1.2;max-width:140px;overflow:hidden"><b id="pname" style="font-size:13px;white-space:nowrap"></b><br><span id="pmail" style="font-size:11px;color:var(--mut);white-space:nowrap"></span></div>
+    <button class="btn sm" id="logoutBtn">Keluar</button>
+  </div>
+</header>
+
+<nav id="nav">
+  <button data-v="market" class="on"><span class="ic">📈</span>Pasar</button>
+  <button data-v="trade"><span class="ic">🔁</span>Trade</button>
+  <button data-v="wallet"><span class="ic">👛</span>Dompet</button>
+  <button data-v="info"><span class="ic">ℹ️</span>Info</button>
+</nav>
+
+<main>
+<div id="banner" class="hidden"></div>
+
+<!-- PASAR -->
+<section class="view on" id="v-market">
+ <div class="cols">
+  <div style="display:grid;gap:14px">
+   <div class="card">
+     <h3>Harga CAZO</h3>
+     <div class="big" id="price">—</div>
+     <div id="chg" class="row" style="justify-content:flex-start;gap:12px;margin-top:4px"><span id="chgAbs">—</span><span id="chgPct">—</span><span style="color:var(--mut)">24 jam</span></div>
+   </div>
+   <div class="card">
+     <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+       <div class="tabs" id="ivTabs" style="margin:0"></div>
+       <div class="tabs" id="typeTabs" style="margin:0"><button data-t="candle" class="on">Candle</button><button data-t="line">Garis</button></div>
+     </div>
+     <div id="chartWrap"><div id="chart"></div><div id="tip"></div><div id="empty">Menunggu transaksi pertama</div></div>
+   </div>
+  </div>
+  <div style="display:grid;gap:14px;align-content:start">
+   <div class="card">
+     <h3>Tekanan beli vs jual (menit ini)</h3>
+     <div class="row"><span class="down">Beli <b id="pBuy">0</b></span><span class="up">Jual <b id="pSell">0</b></span></div>
+     <div class="press"><i id="pBar" style="width:50%"></i></div>
+     <div class="note">Aturan CAZO: tekanan beli lebih besar → harga turun; tekanan jual lebih besar → harga naik.</div>
+   </div>
+   <div class="card grid2">
+     <div class="stat"><span>Tertinggi 24j</span><b id="sHigh">—</b></div>
+     <div class="stat"><span>Terendah 24j</span><b id="sLow">—</b></div>
+     <div class="stat"><span>Vol. beli 24j</span><b id="sBV">—</b></div>
+     <div class="stat"><span>Vol. jual 24j</span><b id="sSV">—</b></div>
+     <div class="stat"><span>Transaksi 24j</span><b id="sN">—</b></div>
+     <div class="stat"><span>Harga awal</span><b>Rp500</b></div>
+   </div>
+   <div class="card grid2">
+     <div class="stat"><span>Saldo Rupiah</span><b id="dRp">—</b></div>
+     <div class="stat"><span>Saldo CAZO</span><b id="dCz">—</b></div>
+     <div class="stat" style="grid-column:1/3"><span>Nilai portofolio (harga terakhir)</span><b id="dPf">—</b></div>
+   </div>
+   <div class="grid2">
+     <button class="btn p" data-go="trade:buy">Beli</button>
+     <button class="btn d" data-go="trade:sell">Jual</button>
+     <button class="btn" style="grid-column:1/3" data-go="wallet">Deposit</button>
+   </div>
+  </div>
+ </div>
+ <div class="card"><h3>Riwayat transaksi terbaru</h3><div id="recent"><div class="note">Masuk untuk melihat transaksi Anda.</div></div></div>
+</section>
+
+<!-- TRADE -->
+<section class="view" id="v-trade">
+ <div class="card" style="max-width:520px;width:100%;margin:auto">
+  <div class="seg" id="side"><button class="on buy" data-s="buy">Beli</button><button data-s="sell" class="sell">Jual</button></div>
+  <div class="row"><span>Harga pasar terakhir</span><b id="tPrice">—</b></div>
+  <div id="modeBox"><label>Input berdasarkan</label><select id="tMode"><option value="rp">Nominal rupiah</option><option value="qty">Jumlah CAZO</option></select></div>
+  <label id="tLabel">Nominal (Rp)</label>
+  <input id="tVal" type="number" inputmode="decimal" min="0" placeholder="0">
+  <div class="row note"><span id="tAvail"></span><a href="#" id="tMax" style="color:var(--g)">Maks</a></div>
+  <div class="sum" id="tSum"></div>
+  <button class="btn p" style="width:100%" id="tGo">Lanjutkan</button>
+  <div class="note">Transaksi diproses dan divalidasi oleh server. Harga final dihitung server saat permintaan diterima dan dapat berbeda tipis dari estimasi.</div>
+ </div>
+</section>
+
+<!-- WALLET -->
+<section class="view" id="v-wallet">
+ <div class="card grid2">
+   <div class="stat"><span>Rupiah tersedia</span><b id="wRp">—</b></div>
+   <div class="stat"><span>CAZO tersedia</span><b id="wCz">—</b></div>
+   <div class="stat" style="grid-column:1/3"><span>Nilai portofolio</span><b id="wPf">—</b></div>
+ </div>
+ <div class="cols">
+ <div class="card">
+   <h3>Deposit via QRIS</h3>
+   <div class="warn">Minimal deposit <b id="minDep">Rp5.000</b>. Nominal di bawah minimum <b>tidak dapat dikreditkan</b>. Jangan membayar sebelum membuat permintaan deposit. Jika sudah telanjur membayar di bawah minimum, hubungi admin dengan menyertakan bukti pembayaran agar dapat dibantu secara manual.</div>
+   <label>Nominal deposit (Rp)</label>
+   <input id="depAmt" type="number" inputmode="numeric" placeholder="Contoh: 50000">
+   <div class="note" id="depHint"></div>
+   <button class="btn p" style="width:100%;margin-top:10px" id="depGo">Buat permintaan deposit</button>
+   <div id="depPanel" class="hidden" style="margin-top:14px">
+     <div class="sum">
+       <div class="row"><span>Referensi</span><b id="dpRef"></b></div>
+       <div class="row"><span>Nominal</span><b id="dpAmt"></b></div>
+       <div class="row"><span>Status</span><span id="dpSt"></span></div>
+     </div>
+     <img class="qris" src="https://i.ibb.co.com/7tj8JVnF/IMG-20261012-160202.jpg" alt="QRIS pembayaran CAZO">
+     <div class="note">Bayar sesuai nominal di atas lewat QRIS. QRIS ini tidak mendukung nominal unik/konfirmasi otomatis, sehingga verifikasi dilakukan <b>manual oleh admin</b>. Saldo ditambahkan setelah admin menyetujui, bukan saat Anda mengunggah bukti.</div>
+     <div id="proofBox">
+       <label>Bukti pembayaran (opsional, JPG/PNG)</label>
+       <input type="file" id="proofFile" accept="image/jpeg,image/png">
+       <button class="btn" style="width:100%;margin-top:10px" id="proofGo">Saya sudah bayar — kirim untuk verifikasi</button>
+     </div>
+   </div>
+ </div>
+ <div class="card"><h3>Riwayat deposit</h3><div id="depList"><div class="note">Masuk untuk melihat deposit.</div></div></div>
+ </div>
+ <div class="card">
+   <h3>Riwayat saldo, beli &amp; jual</h3>
+   <div class="filters">
+     <select id="fType"><option value="">Semua jenis</option><option value="deposit">Deposit</option><option value="buy">Beli</option><option value="sell">Jual</option></select>
+     <input type="date" id="fFrom"><input type="date" id="fTo">
+   </div>
+   <div id="hist" style="margin-top:8px"></div>
+   <button class="btn sm hidden" id="more" style="width:100%;margin-top:8px">Muat lebih banyak</button>
+ </div>
+</section>
+
+<!-- INFO -->
+<section class="view" id="v-info">
+ <div class="card" style="line-height:1.65;font-size:14px">
+  <h3>Tentang CAZO</h3>
+  <p>CAZO adalah aset digital internal platform ini. Harga awal <b>Rp500</b> per CAZO. Harga ini dihitung oleh sistem CAZO sendiri dan <b>tidak otomatis mencerminkan nilai pasar eksternal</b>. Platform ini bukan bursa berizin dan tidak ada jaminan keuntungan; Anda dapat kehilangan dana.</p>
+  <h3 style="margin-top:16px">Mekanisme harga</h3>
+  <p>Setiap transaksi beli/jual yang <b>berhasil</b> menambah tekanan pada menit berjalan. Server menghitung:</p>
+  <p><code>tekanan = (totalBeliRp − totalJualRp) / (totalBeliRp + totalJualRp + L)</code></p>
+  <p><code>perubahan = −k × tekanan</code>, dibatasi ±<span id="iMax">2</span>% per menit</p>
+  <p><code>harga = max(hargaMinimum, hargaBukaMenit × (1 + perubahan))</code></p>
+  <ul style="margin:8px 0 0 18px">
+   <li>Tekanan beli &gt; jual → harga bergerak <b>turun</b>.</li>
+   <li>Tekanan jual &gt; beli → harga bergerak <b>naik</b>.</li>
+   <li>Seimbang → harga cenderung stabil.</li>
+   <li>Harga tidak pernah nol atau negatif. Parameter saat ini: k = <span id="iK">0.05</span>, L = Rp<span id="iL">50.000</span>, biaya transaksi <span id="iFee">0.5</span>%.</li>
+   <li>Harga dihitung server tepercaya, bukan oleh browser pengguna maupun admin.</li>
+  </ul>
+  <h3 style="margin-top:16px">Deposit</h3>
+  <p>Deposit hanya lewat QRIS, minimal Rp5.000, diverifikasi manual oleh admin dan dikreditkan tepat satu kali setelah disetujui.</p>
+ </div>
+</section>
+</main>
+</div>
+
+<!-- Modals -->
+<div class="modal hidden" id="mLogin"><div>
+  <h3 style="font-size:18px;margin-bottom:8px;color:var(--txt);text-transform:none">Masuk untuk melanjutkan</h3>
+  <p class="note" style="font-size:14px">Beli, jual, deposit, dan portofolio memerlukan akun. Login memakai Google; identitas Anda disimpan sebagai UID.</p>
+  <button class="btn p" style="width:100%;margin-top:14px" id="mLoginGo">Masuk dengan Google</button>
+  <button class="btn" style="width:100%;margin-top:8px" data-close>Batal</button>
+</div></div>
+<div class="modal hidden" id="mConfirm"><div>
+  <h3 style="font-size:18px;margin-bottom:8px;color:var(--txt);text-transform:none">Konfirmasi pesanan</h3>
+  <div class="sum" id="cSum"></div>
+  <button class="btn p" style="width:100%" id="cGo">Konfirmasi</button>
+  <button class="btn" style="width:100%;margin-top:8px" data-close>Batal</button>
+</div></div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, get, query, orderByChild, limitToLast, limitToFirst } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCHr0eemIkfHNFDUkSaFDklp_c1OgmSnl8",
+  authDomain: "mybro-9ba5f.firebaseapp.com",
+  databaseURL: "https://mybro-9ba5f-default-rtdb.firebaseio.com/",
+  projectId: "mybro-9ba5f"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+const functions = getFunctions(app, "asia-southeast1");
+const call = (n) => httpsCallable(functions, n);
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const rp = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID", { maximumFractionDigits: 2 });
+const qf = (n) => Number(n || 0).toLocaleString("id-ID", { maximumFractionDigits: 6 });
+const DEF = { initialPrice: 500, minPrice: 1, feePct: 0.5, minOrderRp: 1000, maxOrderRp: 5000000, minDeposit: 5000, maxDeposit: 50000000, k: 0.05, maxChangePct: 2, liquidity: 50000 };
+const IVS = { "1m": "1 mnt", "5m": "5 mnt", "15m": "15 mnt", "1h": "1 jam", "1d": "1 hari" };
+
+let settings = { ...DEF }, state = null, wallet = { rupiahBalance: 0, cazoBalance: 0 }, user = null;
+let iv = "15m", chartType = "candle", side = "buy", activeDep = null, deposits = {}, txs = {}, txLimit = 30, dayCandles = {};
+let unsubs = [], pendingAction = null;
+
+function toast(msg, err) { const t = $("#toast"); t.textContent = msg; t.className = "show" + (err ? " err" : ""); clearTimeout(toast.t); toast.t = setTimeout(() => t.className = "", 3500); }
+function animateTo(el, val, fmt) {
+  const from = el._v ?? 0; el._v = val; const t0 = performance.now();
+  const step = (t) => { const p = Math.min(1, (t - t0) / 600); el.textContent = fmt(from + (val - from) * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function getPrice() { return state?.price ?? settings.initialPrice; }
+function withTimeout(p, ms, msg) { return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error(msg)), ms))]); }
+
+/* ---------- Chart ---------- */
+const fmtTime = (t) => new Date(t * 1000).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+const chart = LightweightCharts.createChart($("#chart"), {
+  autoSize: true,
+  layout: { background: { color: "transparent" }, textColor: "#7f9a90" },
+  grid: { vertLines: { color: "#14211c" }, horzLines: { color: "#14211c" } },
+  rightPriceScale: { borderColor: "#1c2d27" },
+  timeScale: { borderColor: "#1c2d27", timeVisible: true, secondsVisible: false },
+  localization: { timeFormatter: fmtTime },
+  crosshair: { mode: 1 }
+});
+const candleS = chart.addCandlestickSeries({ upColor: "#00ff9d", downColor: "#ff4d6d", borderVisible: false, wickUpColor: "#00ff9d", wickDownColor: "#ff4d6d" });
+const lineS = chart.addLineSeries({ color: "#00ff9d", lineWidth: 2, visible: false });
+const volS = chart.addHistogramSeries({ priceFormat: { type: "volume" }, priceScaleId: "vol" });
+chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+let priceLine = null;
+chart.subscribeCrosshairMove((p) => {
+  const tip = $("#tip");
+  if (!p.time || !p.seriesData) { tip.textContent = ""; return; }
+  const c = p.seriesData.get(candleS), l = p.seriesData.get(lineS);
+  const v = p.seriesData.get(volS);
+  if (c) tip.textContent = `${fmtTime(p.time)} · O ${c.open} H ${c.high} L ${c.low} C ${c.close}${v ? " · Vol " + qf(v.value) : ""}`;
+  else if (l) tip.textContent = `${fmtTime(p.time)} · ${rp(l.value)}`;
+});
+function setCandles(obj) {
+  const arr = Object.entries(obj || {}).map(([t, c]) => ({ t: +t, c })).sort((a, b) => a.t - b.t);
+  candleS.setData(arr.map(({ t, c }) => ({ time: t, open: c.o, high: c.h, low: c.l, close: c.c })));
+  lineS.setData(arr.map(({ t, c }) => ({ time: t, value: c.c })));
+  volS.setData(arr.map(({ t, c }) => ({ time: t, value: c.v, color: c.c >= c.o ? "#00ff9d55" : "#ff4d6d55" })));
+  $("#empty").classList.toggle("hidden", arr.length > 0);
+  chart.timeScale().fitContent();
+}
+function updatePriceLine() {
+  if (priceLine) candleS.removePriceLine(priceLine);
+  priceLine = candleS.createPriceLine({ price: getPrice(), color: "#ffd54a", lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: "CAZO" });
+}
+let candleUnsub = null;
+function watchCandles() {
+  if (candleUnsub) candleUnsub();
+  candleUnsub = onValue(query(ref(db, `market/cazo/candles/${iv}`), limitToLast(300)), (s) => setCandles(s.val()));
+}
+$("#ivTabs").innerHTML = Object.entries(IVS).map(([k, v]) => `<button data-i="${k}" class="${k === iv ? "on" : ""}">${v}</button>`).join("");
+$("#ivTabs").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; iv = b.dataset.i; $$("#ivTabs button").forEach((x) => x.classList.toggle("on", x === b)); watchCandles(); };
+$("#typeTabs").onclick = (e) => {
+  const b = e.target.closest("button"); if (!b) return; chartType = b.dataset.t;
+  $$("#typeTabs button").forEach((x) => x.classList.toggle("on", x === b));
+  candleS.applyOptions({ visible: chartType === "candle" }); lineS.applyOptions({ visible: chartType === "line" });
+};
+
+/* ---------- Render ---------- */
+function renderMarket() {
+  const p = getPrice();
+  animateTo($("#price"), p, rp);
+  const arr = Object.entries(dayCandles).map(([t, c]) => ({ t: +t, c })).filter((x) => x.t >= Date.now() / 1000 - 86400).sort((a, b) => a.t - b.t);
+  const open = arr.length ? arr[0].c.o : settings.initialPrice;
+  const d = p - open, pct = open ? (d / open) * 100 : 0;
+  const cls = d > 0 ? "up" : d < 0 ? "down" : "";
+  $("#chgAbs").textContent = (d >= 0 ? "+" : "") + rp(d); $("#chgPct").textContent = (pct >= 0 ? "+" : "") + pct.toFixed(2) + "%";
+  $("#chgAbs").className = $("#chgPct").className = cls;
+  const hi = arr.length ? Math.max(...arr.map((x) => x.c.h)) : p, lo = arr.length ? Math.min(...arr.map((x) => x.c.l)) : p;
+  $("#sHigh").textContent = rp(hi); $("#sLow").textContent = rp(lo);
+  $("#sBV").textContent = qf(arr.reduce((a, x) => a + (x.c.bv || 0), 0)) + " CAZO";
+  $("#sSV").textContent = qf(arr.reduce((a, x) => a + (x.c.sv || 0), 0)) + " CAZO";
+  $("#sN").textContent = arr.reduce((a, x) => a + (x.c.n || 0), 0);
+  const nowMin = Math.floor(Date.now() / 60000) * 60, cur = state && state.bucketStart === nowMin;
+  const b = cur ? state.buyRp || 0 : 0, s = cur ? state.sellRp || 0 : 0;
+  $("#pBuy").textContent = rp(b); $("#pSell").textContent = rp(s);
+  $("#pBar").style.width = (b + s ? (s / (b + s)) * 100 : 50) + "%"; // hijau = tekanan jual (harga naik)
+  updatePriceLine();
+  renderWallet(); renderTrade();
+}
+function renderWallet() {
+  const pf = wallet.cazoBalance * getPrice();
+  const set = (id, v, f) => animateTo($(id), v, f);
+  set("#dRp", wallet.rupiahBalance, rp); set("#wRp", wallet.rupiahBalance, rp);
+  set("#dCz", wallet.cazoBalance, qf); set("#wCz", wallet.cazoBalance, qf);
+  set("#dPf", pf, rp); set("#wPf", pf, rp);
+}
+function statusChip(s) {
+  const m = { waiting_payment: ["Menunggu pembayaran", "wait"], awaiting_verification: ["Menunggu verifikasi admin", "wait"], crediting: ["Diproses", "wait"], approved: ["Disetujui", "ok"], rejected: ["Ditolak", "bad"], completed: ["Berhasil", "ok"], pending: ["Diproses", "wait"], failed: ["Gagal", "bad"] }[s] || [s, ""];
+  return `<span class="chip ${m[1]}">${m[0]}</span>`;
+}
+const typeName = { buy: "Beli", sell: "Jual", deposit: "Deposit" };
+function txRow(t) {
+  const q = t.type === "deposit" ? "" : `${qf(t.quantity)} CAZO @ ${rp(t.unitPrice)}`;
+  return `<div class="tx"><div class="dot ${t.type}">${t.type === "buy" ? "B" : t.type === "sell" ? "S" : "D"}</div>
+  <div><b>${typeName[t.type] || t.type}</b> ${statusChip(t.status)}<br><span style="color:var(--mut)">${new Date(t.createdAt).toLocaleString("id-ID")} · ${esc(t.reference || "")}${q ? "<br>" + q : ""}<br>ID ${esc(t.id)}</span></div>
+  <b class="${t.type === "sell" || t.type === "deposit" ? "up" : "down"}">${t.type === "buy" ? "-" : "+"}${rp(t.total ?? t.amount)}</b></div>`;
+}
+function renderTx() {
+  const list = Object.values(txs).sort((a, b) => b.createdAt - a.createdAt);
+  $("#recent").innerHTML = list.slice(0, 5).map(txRow).join("") || '<div class="note">Belum ada transaksi.</div>';
+  const ft = $("#fType").value, ff = $("#fFrom").value ? new Date($("#fFrom").value).getTime() : 0, fto = $("#fTo").value ? new Date($("#fTo").value).getTime() + 86400000 : Infinity;
+  const f = list.filter((t) => (!ft || t.type === ft) && t.createdAt >= ff && t.createdAt < fto);
+  $("#hist").innerHTML = f.map(txRow).join("") || '<div class="note">Tidak ada data.</div>';
+  $("#more").classList.toggle("hidden", list.length < txLimit);
+}
+function renderDeposits() {
+  const list = Object.values(deposits).sort((a, b) => b.createdAt - a.createdAt);
+  $("#depList").innerHTML = list.map((d) => `<div class="tx" style="grid-template-columns:1fr auto"><div><b>${rp(d.amount)}</b> ${statusChip(d.status)}<br><span style="color:var(--mut)">${new Date(d.createdAt).toLocaleString("id-ID")}<br>${esc(d.reference)}${d.note ? "<br>Catatan admin: " + esc(d.note) : ""}</span></div>${d.status === "waiting_payment" ? `<button class="btn sm" data-dep="${esc(d.id)}">Buka</button>` : ""}</div>`).join("") || '<div class="note">Belum ada deposit.</div>';
+  if (activeDep && deposits[activeDep]) showDeposit(deposits[activeDep]);
+}
+function showDeposit(d) {
+  activeDep = d.id; $("#depPanel").classList.remove("hidden");
+  $("#dpRef").textContent = d.reference; $("#dpAmt").textContent = rp(d.amount); $("#dpSt").innerHTML = statusChip(d.status);
+  $("#proofBox").classList.toggle("hidden", d.status !== "waiting_payment");
+}
+$("#depList").onclick = (e) => { const b = e.target.closest("[data-dep]"); if (b) showDeposit(deposits[b.dataset.dep]); };
+
+/* ---------- Trade ---------- */
+function calc() {
+  const v = Number($("#tVal").value) || 0, p = getPrice(), f = settings.feePct / 100;
+  let qty, cost, fee, total;
+  if (side === "buy") {
+    qty = $("#tMode").value === "qty" ? Math.floor(v * 1e6) / 1e6 : Math.floor((v / (1 + f) / p) * 1e6) / 1e6;
+    cost = qty * p; fee = cost * f; total = cost + fee;
+  } else { qty = Math.floor(v * 1e6) / 1e6; cost = qty * p; fee = cost * f; total = cost - fee; }
+  return { p, qty, cost, fee, total };
+}
+function renderTrade() {
+  $("#tPrice").textContent = rp(getPrice());
+  $("#modeBox").classList.toggle("hidden", side === "sell");
+  const qtyMode = side === "sell" || $("#tMode").value === "qty";
+  $("#tLabel").textContent = qtyMode ? "Jumlah CAZO" : "Nominal (Rp)";
+  $("#tAvail").textContent = side === "buy" ? "Saldo: " + rp(wallet.rupiahBalance) : "Tersedia: " + qf(wallet.cazoBalance) + " CAZO";
+  const c = calc();
+  $("#tSum").innerHTML = `<div class="row"><span>Harga per unit</span><b>${rp(c.p)}</b></div><div class="row"><span>${side === "buy" ? "CAZO diterima (estimasi)" : "CAZO dijual"}</span><b>${qf(c.qty)}</b></div><div class="row"><span>Subtotal</span><b>${rp(c.cost)}</b></div><div class="row"><span>Biaya (${settings.feePct}%)</span><b>${rp(c.fee)}</b></div><div class="row"><span>${side === "buy" ? "Total bayar" : "Total diterima"}</span><b>${rp(c.total)}</b></div>`;
+}
+$("#side").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; side = b.dataset.s; $$("#side button").forEach((x) => x.classList.toggle("on", x === b)); renderTrade(); };
+$("#tVal").oninput = renderTrade; $("#tMode").onchange = renderTrade;
+$("#tMax").onclick = (e) => { e.preventDefault(); if (side === "sell") $("#tVal").value = wallet.cazoBalance; else if ($("#tMode").value === "rp") $("#tVal").value = Math.floor(wallet.rupiahBalance); else $("#tVal").value = Math.floor((wallet.rupiahBalance / (1 + settings.feePct / 100) / getPrice()) * 1e6) / 1e6; renderTrade(); };
+let order = null;
+$("#tGo").onclick = () => {
+  if (!requireLogin()) return;
+  const c = calc();
+  if (c.qty <= 0) return toast("Masukkan nominal yang valid.", true);
+  if (c.cost < settings.minOrderRp) return toast(`Minimal order ${rp(settings.minOrderRp)}.`, true);
+  if (c.cost > settings.maxOrderRp) return toast(`Maksimal order ${rp(settings.maxOrderRp)}.`, true);
+  if (side === "buy" && c.total > wallet.rupiahBalance + 1e-6) return toast("Saldo rupiah tidak mencukupi.", true);
+  if (side === "sell" && c.qty > wallet.cazoBalance + 1e-9) return toast("Saldo CAZO tidak mencukupi.", true);
+  order = { side, mode: side === "sell" ? "qty" : $("#tMode").value, value: Number($("#tVal").value), idemKey: crypto.randomUUID().replace(/-/g, "") };
+  $("#cSum").innerHTML = `<div class="row"><span>Jenis</span><b>${side === "buy" ? "Beli" : "Jual"} CAZO</b></div><div class="row"><span>Harga</span><b>${rp(c.p)}</b></div><div class="row"><span>Jumlah</span><b>${qf(c.qty)} CAZO</b></div><div class="row"><span>Biaya</span><b>${rp(c.fee)}</b></div><div class="row"><span>${side === "buy" ? "Total bayar" : "Total diterima"}</span><b>${rp(c.total)}</b></div><div class="note">Harga final ditetapkan server.</div>`;
+  $("#mConfirm").classList.remove("hidden");
+};
+$("#cGo").onclick = async () => {
+  const b = $("#cGo"); b.disabled = true; b.textContent = "Memproses...";
+  try {
+    const r = (await call("trade")(order)).data;
+    $("#mConfirm").classList.add("hidden"); $("#tVal").value = "";
+    toast(`${r.type === "buy" ? "Pembelian" : "Penjualan"} berhasil: ${qf(r.quantity)} CAZO @ ${rp(r.unitPrice)}`);
+  } catch (e) { toast(e.message || "Transaksi gagal.", true); }
+  b.disabled = false; b.textContent = "Konfirmasi";
+};
+
+/* ---------- Deposit ---------- */
+$("#depAmt").oninput = () => {
+  const v = Number($("#depAmt").value);
+  $("#depHint").textContent = v && v < settings.minDeposit ? `Di bawah minimum (${rp(settings.minDeposit)}). Jangan bayar — pembayaran tidak dapat dikreditkan.` : "";
+  $("#depHint").style.color = "var(--red)";
+};
+$("#depGo").onclick = async () => {
+  if (!requireLogin()) return;
+  const amount = Number($("#depAmt").value);
+  if (!amount || amount < settings.minDeposit) return toast(`Deposit minimal ${rp(settings.minDeposit)}. Pembayaran di bawah minimum tidak dapat dikreditkan.`, true);
+  const b = $("#depGo"); b.disabled = true;
+  try { const d = (await call("createDeposit")({ amount, idemKey: crypto.randomUUID().replace(/-/g, "") })).data; $("#depAmt").value = ""; showDeposit(d); toast("Permintaan dibuat. Lanjutkan pembayaran QRIS."); }
+  catch (e) { toast(e.message, true); }
+  b.disabled = false;
+};
+function compress(file) {
+  return new Promise((res, rej) => {
+    const img = new Image(); img.onload = () => {
+      const m = 900, k = Math.min(1, m / Math.max(img.width, img.height)), c = document.createElement("canvas");
+      c.width = img.width * k; c.height = img.height * k; c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL("image/jpeg", 0.7));
+    }; img.onerror = () => rej(new Error("Gambar tidak dapat dibaca.")); img.src = URL.createObjectURL(file);
+  });
+}
+$("#proofGo").onclick = async () => {
+  if (!activeDep) return;
+  const b = $("#proofGo"); b.disabled = true;
+  try {
+    const f = $("#proofFile").files[0]; const imageData = f ? await compress(f) : null;
+    await call("submitProof")({ depositId: activeDep, imageData });
+    toast("Dikirim. Menunggu verifikasi admin."); $("#proofFile").value = "";
+  } catch (e) { toast(e.message, true); }
+  b.disabled = false;
+};
+
+/* ---------- Auth ---------- */
+const provider = new GoogleAuthProvider();
+async function login() {
+  try { await signInWithPopup(auth, provider); $("#mLogin").classList.add("hidden"); }
+  catch (e) {
+    if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment", "auth/cancelled-popup-request"].includes(e.code)) await signInWithRedirect(auth, provider);
+    else if (e.code !== "auth/popup-closed-by-user") toast("Login gagal: " + e.message, true);
+  }
+}
+function requireLogin() { if (user) return true; $("#mLogin").classList.remove("hidden"); return false; }
+$("#loginBtn").onclick = login; $("#mLoginGo").onclick = login;
+$("#logoutBtn").onclick = () => signOut(auth);
+
+function clearUser() { unsubs.forEach((u) => u()); unsubs = []; wallet = { rupiahBalance: 0, cazoBalance: 0 }; deposits = {}; txs = {}; activeDep = null; $("#depPanel").classList.add("hidden"); renderWallet(); renderTx(); renderDeposits(); }
+function watchUser(uid) {
+  unsubs.push(onValue(ref(db, `wallets/${uid}`), (s) => { wallet = s.val() || wallet; renderWallet(); renderTrade(); }));
+  unsubs.push(onValue(query(ref(db, `deposits/${uid}`), orderByChild("createdAt"), limitToLast(30)), (s) => { deposits = s.val() || {}; renderDeposits(); }));
+  watchTx(uid);
+}
+let txUnsub = null;
+function watchTx(uid) {
+  if (txUnsub) txUnsub();
+  txUnsub = onValue(query(ref(db, `transactions/${uid}`), orderByChild("createdAt"), limitToLast(txLimit)), (s) => { txs = s.val() || {}; renderTx(); });
+}
+$("#more").onclick = () => { txLimit += 30; if (user) watchTx(user.uid); };
+["#fType", "#fFrom", "#fTo"].forEach((s) => $(s).onchange = renderTx);
+
+/* ---------- Navigasi ---------- */
+function go(v) {
+  const [name, arg] = v.split(":");
+  if ((name === "trade" || name === "wallet") && !requireLogin()) { pendingAction = v; return; }
+  $$(".view").forEach((x) => x.classList.toggle("on", x.id === "v-" + name));
+  $$("#nav button").forEach((x) => x.classList.toggle("on", x.dataset.v === name));
+  if (arg) $(`#side [data-s="${arg}"]`).click();
+  scrollTo({ top: 0, behavior: "smooth" });
+}
+$("#nav").onclick = (e) => { const b = e.target.closest("button"); if (b) go(b.dataset.v); };
+document.addEventListener("click", (e) => {
+  const g = e.target.closest("[data-go]"); if (g) go(g.dataset.go);
+  if (e.target.closest("[data-close]") || e.target.classList.contains("modal")) $$(".modal").forEach((m) => m.classList.add("hidden"));
+});
+
+/* ---------- Boot ---------- */
+function progress(n, msg) { $("#lbar").style.width = n + "%"; $("#lstatus").textContent = msg; }
+let booted = false, authReady = null;
+async function boot() {
+  $("#lerr").style.display = "none"; $("#lbar").parentElement.style.display = "";
+  try {
+    progress(10, "Menghubungkan ke Firebase...");
+    const [st, se] = await withTimeout(Promise.all([get(ref(db, "market/cazo/state")), get(ref(db, "market/cazo/settings"))]), 12000, "Koneksi ke Firebase terlalu lama.");
+    state = st.val(); settings = { ...DEF, ...(se.val() || {}) };
+    progress(40, "Memuat harga CAZO...");
+    authReady = authReady || new Promise((res) => { getRedirectResult(auth).catch(() => {}); const off = onAuthStateChanged(auth, (u) => { off(); res(u); }); });
+    progress(60, "Memeriksa sesi login...");
+    await withTimeout(authReady, 12000, "Gagal memeriksa sesi login.");
+    progress(80, "Menyiapkan grafik...");
+    const c = await withTimeout(get(query(ref(db, `market/cazo/candles/${iv}`), limitToLast(300))), 12000, "Gagal memuat data grafik.");
+    setCandles(c.val());
+    if (!booted) startLive();
+    booted = true;
+    progress(100, "Siap!");
+    $("#loader").classList.add("out");
+  } catch (e) {
+    $("#lbar").parentElement.style.display = "none"; $("#lstatus").textContent = "";
+    $("#lerrmsg").textContent = "Tidak dapat terhubung: " + (e.message || e); $("#lerr").style.display = "block";
+  }
+}
+function startLive() {
+  onValue(ref(db, "market/cazo/state"), (s) => { state = s.val(); renderMarket(); });
+  onValue(ref(db, "market/cazo/settings"), (s) => { settings = { ...DEF, ...(s.val() || {}) }; fillInfo(); renderMarket(); });
+  onValue(query(ref(db, "market/cazo/candles/1h"), limitToLast(30)), (s) => { dayCandles = s.val() || {}; renderMarket(); });
+  onValue(ref(db, "announcements/latest"), (s) => { const a = s.val(); const b = $("#banner"); b.classList.toggle("hidden", !a); if (a) b.textContent = "📢 " + a.text; });
+  watchCandles();
+  onAuthStateChanged(auth, async (u) => {
+    user = u; clearUser();
+    $("#loginBtn").classList.toggle("hidden", !!u); $("#profile").classList.toggle("hidden", !u);
+    if (u) {
+      $("#pfoto").src = u.photoURL || ""; $("#pname").textContent = u.displayName || "Pengguna"; $("#pmail").textContent = u.email || "";
+      try { await call("ensureUser")(); } catch (e) { toast("Gagal menyiapkan akun: " + e.message, true); }
+      watchUser(u.uid);
+      if (pendingAction) { const a = pendingAction; pendingAction = null; go(a); }
+    }
+  });
+  fillInfo(); renderMarket();
+}
+function fillInfo() {
+  $("#iMax").textContent = settings.maxChangePct; $("#iK").textContent = settings.k; $("#iL").textContent = Number(settings.liquidity).toLocaleString("id-ID"); $("#iFee").textContent = settings.feePct;
+  $("#minDep").textContent = rp(settings.minDeposit);
+}
+$("#lretry").onclick = boot;
+boot();
+</script>
+</body>
+</html>
