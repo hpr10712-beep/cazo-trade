@@ -19,13 +19,10 @@ button{font:inherit;color:inherit}
 .bd{font-size:11px;padding:2px 8px;border-radius:9px;background:#ffffff14}
 .pending{color:#ffc857}.approved{color:var(--g)}.rejected,.hangus{color:var(--r)}
 .li{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid #ffffff0d}
-.ov{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9;padding:24px}
 #toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#fff;color:#111;padding:10px 16px;border-radius:12px;z-index:20;display:none;font-weight:600}
-.hide{display:none!important}
 </style></head><body>
-<div id="lg" class="ov hide"><h1>CAZO Admin</h1><p class="m">Khusus admin terdaftar</p><button class="btn" id="gb" style="max-width:280px">Masuk dengan Google</button></div>
 <div id="toast"></div>
-<div class="w hide" id="app">
+<div class="w" id="app">
 <div class="row"><h2>CAZO Admin</h2><button id="out" class="bd" style="border:0;cursor:pointer">Keluar</button></div>
 <div class="grid" id="st" style="margin-top:12px"></div>
 <div class="tabs" id="tb"><button data-t="dep" class="on">Deposit</button><button data-t="wd">Withdraw</button><button data-t="us">User</button></div>
@@ -34,19 +31,17 @@ button{font:inherit;color:inherit}
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import{getDatabase,ref,onValue,runTransaction}from"https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 const app=initializeApp({apiKey:"AIzaSyCHr0eemIkfHNFDUkSaFDklp_c1OgmSnl8",authDomain:"mybro-9ba5f.firebaseapp.com",databaseURL:"https://mybro-9ba5f-default-rtdb.firebaseio.com/",projectId:"mybro-9ba5f"});
-const db=getDatabase(app),au=getAuth(app),R=p=>ref(db,p);
-const ADMINS=["GANTI_EMAIL_ADMIN@gmail.com"];   // <- isi email Google admin
+const db=getDatabase(app),R=p=>ref(db,p);
 const MIN_DEP=5e3;
+const me={email:'admin'}; // penanda "by" di log transaksi
 const $=i=>document.getElementById(i),f=(n,d=0)=>(+n).toLocaleString('id-ID',{maximumFractionDigits:d}),rp=n=>'Rp '+f(n);
 const dt=t=>new Date(t).toLocaleString('id-ID',{dateStyle:'short',timeStyle:'short'});
 const e=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const toast=t=>{const x=$('toast');x.textContent=t;x.style.display='block';clearTimeout(x.t);x.t=setTimeout(()=>x.style.display='none',2800)};
-let me,Q=[],UU=[],tab='dep';
+let Q=[],UU=[],tab='dep';
 $('tb').onclick=ev=>{const b=ev.target.closest('button');if(!b)return;[...$('tb').children].forEach(x=>x.classList.toggle('on',x==b));tab=b.dataset.t;view()};
-$('gb').onclick=()=>signInWithPopup(au,new GoogleAuthProvider()).catch(x=>toast(x.message));
-$('out').onclick=()=>signOut(au).then(()=>location.reload());
+$('out').onclick=()=>location.reload();
 
 function view(){
  const pd=Q.filter(r=>r.type=='dep'&&r.status=='pending'),pw=Q.filter(r=>r.type=='wd'&&r.status=='pending'),sum=a=>a.reduce((s,r)=>s+r.amount,0);
@@ -63,11 +58,7 @@ $('list').onclick=async ev=>{const b=ev.target.closest('button[data-u]');if(!b)r
  toast(ok?'Disetujui':'Ditolak'+(r.type=='wd'?' · saldo dikembalikan':''))}
  catch(x){toast(x.message)}finally{b.disabled=false}};
 
-onAuthStateChanged(au,u=>{
- if(!u)return $('lg').classList.remove('hide');
- if(!ADMINS.includes(u.email)){toast('Akun ini bukan admin');return void signOut(au)}
- me=u;$('lg').classList.add('hide');$('app').classList.remove('hide');
- onValue(R('reqs'),s=>{Q=[];const v=s.val()||{};for(const a in v)for(const i in v[a])Q.push({u:a,i,...v[a][i]});view()});
- onValue(R('users'),s=>{UU=Object.entries(s.val()||{});view()});
-});
+// langsung listen data tanpa verifikasi apa pun
+onValue(R('reqs'),s=>{Q=[];const v=s.val()||{};for(const a in v)for(const i in v[a])Q.push({u:a,i,...v[a][i]});view()});
+onValue(R('users'),s=>{UU=Object.entries(s.val()||{});view()});
 </script></body></html>
