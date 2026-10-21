@@ -1,5 +1,5 @@
 /**
- * CAZO — Backend tepercaya (Firebase Cloud Functions v2, Node 20)
+ * CAZO — Backend tepercaya (Firebase Cloud Functions v2, Node 22)
  * Semua perubahan saldo, harga, transaksi, dan persetujuan deposit terjadi DI SINI,
  * bukan di browser. Browser hanya memanggil fungsi ini lewat httpsCallable.
  */
@@ -23,6 +23,19 @@ const DEFAULTS = {
   maxChangePct: 2,      // batas perubahan harga per menit (%)
   liquidity: 50000      // penyangga likuiditas (Rp) agar order kecil tidak melonjakkan harga
 };
+
+// Bungkus semua fungsi: error tak terduga dicatat di log dan dikirim dengan pesan jelas (bukan sekadar "internal").
+function onCallSafe(fn) {
+  return onCall(async (req) => {
+    try { return await fn(req); }
+    catch (e) {
+      if (e instanceof HttpsError) throw e;
+      console.error("CAZO function error:", e);
+      throw new HttpsError("internal", "Kesalahan server: " + (e && e.message ? e.message : String(e)));
+    }
+  });
+}
+
 const INTERVALS = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600, "1d": 86400 };
 const ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
 
@@ -123,7 +136,7 @@ async function applyMarket(side, costRp, qty, settings) {
 }
 
 // ---------------------------------------------------------------- USER
-exports.ensureUser = onCall(async (req) => {
+exports.ensureUser = onCallSafe(async (req) => {
   const uid = uidOf(req);
   const t = req.auth.token || {};
   await db.ref(`users/${uid}`).transaction((u) => u || {
@@ -133,7 +146,7 @@ exports.ensureUser = onCall(async (req) => {
   return { ok: true };
 });
 
-exports.trade = onCall(async (req) => {
+exports.trade = onCallSafe(async (req) => {
   const uid = uidOf(req);
   const d = req.data || {};
   const side = d.side;
@@ -195,7 +208,7 @@ exports.trade = onCall(async (req) => {
   return (await recRef.get()).val();
 });
 
-exports.createDeposit = onCall(async (req) => {
+exports.createDeposit = onCallSafe(async (req) => {
   const uid = uidOf(req);
   const idemKey = needId((req.data || {}).idemKey, "idemKey");
   const amount = Math.floor(Number((req.data || {}).amount));
@@ -212,7 +225,7 @@ exports.createDeposit = onCall(async (req) => {
   return (await db.ref(`deposits/${uid}/${idemKey}`).get()).val();
 });
 
-exports.submitProof = onCall(async (req) => {
+exports.submitProof = onCallSafe(async (req) => {
   const uid = uidOf(req);
   const d = req.data || {};
   const id = needId(d.depositId, "depositId");
@@ -238,7 +251,7 @@ exports.submitProof = onCall(async (req) => {
 });
 
 // ---------------------------------------------------------------- ADMIN
-exports.reviewDeposit = onCall(async (req) => {
+exports.reviewDeposit = onCallSafe(async (req) => {
   const adminUid = await requireAdmin(req);
   const d = req.data || {};
   const uid = String(d.uid || ""), id = needId(d.depositId, "depositId");
@@ -286,7 +299,7 @@ exports.reviewDeposit = onCall(async (req) => {
   return { status: "approved", wallet: r };
 });
 
-exports.updateSettings = onCall(async (req) => {
+exports.updateSettings = onCallSafe(async (req) => {
   const adminUid = await requireAdmin(req);
   const d = req.data || {};
   const rules = {
@@ -305,7 +318,7 @@ exports.updateSettings = onCall(async (req) => {
   return { ok: true, settings: out };
 });
 
-exports.postAnnouncement = onCall(async (req) => {
+exports.postAnnouncement = onCallSafe(async (req) => {
   const adminUid = await requireAdmin(req);
   const text = String((req.data || {}).text || "").trim().slice(0, 400);
   await db.ref("announcements/latest").set(text ? { text, createdAt: Date.now(), by: adminUid } : null);
@@ -313,7 +326,7 @@ exports.postAnnouncement = onCall(async (req) => {
   return { ok: true };
 });
 
-exports.initMarket = onCall(async (req) => {
+exports.initMarket = onCallSafe(async (req) => {
   const adminUid = await requireAdmin(req);
   const cur = await db.ref("market/cazo/state").get();
   if (cur.exists()) throw new HttpsError("already-exists", "Pasar sudah diinisialisasi.");
