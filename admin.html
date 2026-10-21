@@ -1,604 +1,73 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CAZO Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CAZO Admin</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#060908;--bg2:#0a0f0d;--card:#0f1614;--card2:#131c19;--border:#1a2521;--border2:#243330;--text:#e6f0ec;--muted:#657a72;--primary:#7c5cff;--primaryD:rgba(124,92,255,.15);--neon:#00ff9d;--neonD:rgba(0,255,157,.12);--danger:#ff4d6d;--dangerD:rgba(255,77,109,.12);--warn:#ffc107;--warnD:rgba(255,193,7,.12);--r:14px;--font:'Inter',system-ui,sans-serif}
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
-#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(800px 400px at 50% 20%,rgba(124,92,255,.15),transparent 60%)}
-.gatecard{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 28px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.gicon{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--primary),#5a3fd8);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 16px;box-shadow:0 8px 24px rgba(124,92,255,.4)}
-.gatecard h1{font-size:1.4rem;font-weight:900;margin-bottom:8px}
-.gatecard p{color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:20px}
-.gbtn{width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),#5a3fd8);color:#fff;border:none;border-radius:12px;font-weight:700;font-family:inherit;font-size:.9rem;cursor:pointer;transition:.2s}
-.gbtn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 20px rgba(124,92,255,.4)}
-.gbtn:disabled{opacity:.6;cursor:not-allowed}
-.gmsg{margin-top:14px;font-size:.8rem;color:var(--danger);line-height:1.5;word-break:break-word}
-.gmsg.info{color:var(--muted)}
-.layout{display:none;min-height:100vh}
-.layout.show{display:flex}
-.sb{width:240px;background:var(--card);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;flex-shrink:0}
-.sbb{display:flex;align-items:center;gap:10px;padding:0 8px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
-.sbl{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#5a3fd8);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:.9rem}
-.sbb div b{font-size:.95rem;display:block}
-.sbb div small{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
-.sb-btn{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;border:none;background:none;color:var(--muted);cursor:pointer;font-family:inherit;font-size:.85rem;font-weight:600;text-align:left;transition:.15s;width:100%}
-.sb-btn:hover{background:var(--card2);color:var(--text)}
-.sb-btn.active{background:var(--primaryD);color:#b5a5ff}
-.sb-btn .ico{font-size:1.05rem;width:20px;text-align:center}
-.main{flex:1;padding:24px;max-width:1400px;overflow-x:hidden}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px}
-.topbar h1{font-size:1.4rem;font-weight:800}
-.topbar .ai{font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:8px}
-.topbar .ai::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--neon);box-shadow:0 0 8px var(--neon);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:16px}
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
-.stat{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden}
-.stat::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,var(--primaryD),transparent 70%);border-radius:50%}
-.stat .k{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:flex;align-items:center;gap:6px}
-.stat .v{font-size:1.6rem;font-weight:900;margin-top:6px;letter-spacing:-.5px}
-.stat.neon .v{color:var(--neon)}
-.stat.warn .v{color:var(--warn)}
-.stat.purple .v{color:#b5a5ff}
-.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border)}
-table{width:100%;border-collapse:collapse;font-size:.8rem}
-th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:middle}
-th{background:var(--card2);color:var(--muted);font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.6px}
-td{font-variant-numeric:tabular-nums}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.01)}
-.mono{font-family:ui-monospace,monospace;font-size:.72rem;color:var(--muted)}
-.btn{padding:8px 14px;border-radius:9px;border:none;font-weight:700;font-family:inherit;font-size:.75rem;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px}
-.btn-primary{background:var(--neon);color:#04120b}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-ghost{background:var(--card2);color:var(--text);border:1px solid var(--border)}
-.btn-ghost:hover{border-color:var(--primary)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-sm{padding:6px 10px;font-size:.7rem}
-.badge{padding:3px 9px;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:inline-block}
-.badge.pending,.badge.waiting_verification{background:var(--warnD);color:var(--warn)}
-.badge.approved,.badge.success{background:var(--neonD);color:var(--neon)}
-.badge.rejected,.badge.failed{background:var(--dangerD);color:var(--danger)}
-.search-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-input,select{padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit;font-size:.82rem;transition:.2s}
-input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primaryD)}
-.frow{margin-bottom:14px}
-.flabel{display:block;font-size:.75rem;color:var(--muted);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.finput{width:100%;padding:12px 14px}
-.logitem{padding:10px 0;border-bottom:1px solid var(--border);font-size:.78rem;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.logitem:last-child{border-bottom:none}
-.logitem strong{color:var(--text)}
-.hidden{display:none!important}
-.empty{padding:32px;text-align:center;color:var(--muted);font-size:.85rem}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:300;display:none;align-items:center;justify-content:center;padding:24px}
-.modal.open{display:flex}
-.modal-card{background:var(--card);border:1px solid var(--border);border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;padding:24px}
-.modal-card h3{margin-bottom:16px;font-size:1.1rem}
-.modal-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-#chartContainer{width:100%;height:300px;border-radius:12px;overflow:hidden;background:var(--bg2);border:1px solid var(--border);margin-bottom:16px}
-@media(max-width:860px){
-  .sb{width:64px;padding:16px 6px}
-  .sbb div,.sb-btn span:not(.ico){display:none}
-  .sb-btn{justify-content:center;padding:12px}
-  .main{padding:16px 12px}
-  .topbar h1{font-size:1.1rem}
-}
-</style>
-</head>
-<body>
-
-<div id="gate">
-  <div class="gatecard">
-    <div class="gicon">🔐</div>
-    <h1>CAZO Admin</h1>
-    <p>Panel administrator. Login dengan Google untuk melanjutkan.</p>
-    <button class="gbtn" id="loginBtn" onclick="login()">Masuk dengan Google</button>
-    <p class="gmsg" id="gateMsg"></p>
-  </div>
+:root{--bg:#0b0e17;--c:#141a2a;--c2:#1c2438;--t:#e8ecf7;--m:#8a94b0;--g:#22d39a;--r:#ff5d7a;--a:#7c5cff}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(800px 400px at 85% -5%,#3a2a9a55,transparent),var(--bg);color:var(--t);font:14px system-ui,sans-serif;min-height:100vh}
+.w{max-width:720px;margin:auto;padding:14px}
+.card{background:linear-gradient(160deg,var(--c),var(--c2));border:1px solid #ffffff10;border-radius:16px;padding:14px;margin-bottom:10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.m{color:var(--m);font-size:12px}.g{color:var(--g)}.r{color:var(--r)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.grid .card{margin:0}
+.grid b{display:block;font-size:17px;margin:4px 0 2px}
+button{font:inherit;color:inherit}
+.btn{width:100%;border:0;border-radius:12px;padding:12px;font-weight:700;background:linear-gradient(90deg,var(--a),#a78bfa);cursor:pointer}
+.btn.b{background:linear-gradient(90deg,#14b88a,var(--g));color:#04251b}.btn.s{background:linear-gradient(90deg,#e8415f,var(--r))}
+.btn:disabled{opacity:.5}
+.tabs{display:flex;gap:6px;background:#0d1322;padding:4px;border-radius:12px;margin:12px 0}
+.tabs button{flex:1;border:0;background:0;padding:10px;border-radius:9px;color:var(--m);font-weight:600;cursor:pointer}
+.tabs .on{background:var(--c2);color:var(--t)}
+.bd{font-size:11px;padding:2px 8px;border-radius:9px;background:#ffffff14}
+.pending{color:#ffc857}.approved{color:var(--g)}.rejected,.hangus{color:var(--r)}
+.li{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid #ffffff0d}
+.ov{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9;padding:24px}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#fff;color:#111;padding:10px 16px;border-radius:12px;z-index:20;display:none;font-weight:600}
+.hide{display:none!important}
+</style></head><body>
+<div id="lg" class="ov hide"><h1>CAZO Admin</h1><p class="m">Khusus admin terdaftar</p><button class="btn" id="gb" style="max-width:280px">Masuk dengan Google</button></div>
+<div id="toast"></div>
+<div class="w hide" id="app">
+<div class="row"><h2>CAZO Admin</h2><button id="out" class="bd" style="border:0;cursor:pointer">Keluar</button></div>
+<div class="grid" id="st" style="margin-top:12px"></div>
+<div class="tabs" id="tb"><button data-t="dep" class="on">Deposit</button><button data-t="wd">Withdraw</button><button data-t="us">User</button></div>
+<div id="list"></div>
 </div>
-
-<div class="layout" id="layout">
-  <aside class="sb">
-    <div class="sbb"><div class="sbl">C</div><div><b>CAZO</b><small>Admin</small></div></div>
-    <button class="sb-btn active" data-p="dash" onclick="showPanel('dash')"><span class="ico">📊</span><span>Dashboard</span></button>
-    <button class="sb-btn" data-p="deposits" onclick="showPanel('deposits')"><span class="ico">💰</span><span>Deposit</span></button>
-    <button class="sb-btn" data-p="users" onclick="showPanel('users')"><span class="ico">👥</span><span>Pengguna</span></button>
-    <button class="sb-btn" data-p="tx" onclick="showPanel('tx')"><span class="ico">📈</span><span>Transaksi</span></button>
-    <button class="sb-btn" data-p="market" onclick="showPanel('market')"><span class="ico">⚙️</span><span>Pasar</span></button>
-    <button class="sb-btn" data-p="logs" onclick="showPanel('logs')"><span class="ico">📝</span><span>Log</span></button>
-    <button class="sb-btn" style="margin-top:auto;color:var(--danger)" onclick="logout()"><span class="ico">🚪</span><span>Keluar</span></button>
-  </aside>
-  <main class="main">
-    <div class="topbar">
-      <h1 id="panelTitle">Dashboard</h1>
-      <div class="ai" id="adminInfo">—</div>
-    </div>
-
-    <section id="pDash">
-      <div class="stat-grid">
-        <div class="stat purple"><div class="k">👥 Total Pengguna</div><div class="v" id="sUsers">—</div></div>
-        <div class="stat warn"><div class="k">⏳ Deposit Pending</div><div class="v" id="sPending">—</div></div>
-        <div class="stat neon"><div class="k">💎 Harga CAZO</div><div class="v" id="sPrice">—</div></div>
-        <div class="stat"><div class="k">📊 Total Transaksi</div><div class="v" id="sTx">—</div></div>
-      </div>
-      <div class="card"><h3 style="font-size:.95rem;margin-bottom:10px">Kesehatan Sistem</h3><p style="font-size:.82rem;color:var(--muted)" id="health">Memeriksa...</p></div>
-    </section>
-
-    <section id="pDeposits" class="hidden">
-      <div class="search-row">
-        <input id="depSearch" placeholder="🔍 Cari referensi / UID / nominal" oninput="renderDeposits()" style="flex:1;min-width:180px">
-        <select id="depFilter" onchange="renderDeposits()">
-          <option value="">Semua status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </div>
-      <div class="tbl-wrap">
-        <table><thead><tr><th>Referensi</th><th>UID</th><th>Nominal</th><th>Waktu</th><th>Status</th><th>Aksi</th></tr></thead>
-        <tbody id="depBody"><tr><td colspan="6" class="empty">Memuat...</td></tr></tbody></table>
-      </div>
-    </section>
-
-    <section id="pUsers" class="hidden">
-      <div class="search-row"><input id="userSearch" placeholder="🔍 Cari UID / nama / email" oninput="renderUsers()" style="flex:1"></div>
-      <div class="tbl-wrap">
-        <table><thead><tr><th>UID</th><th>Nama</th><th>Email</th><th>Rupiah</th><th>CAZO</th></tr></thead>
-        <tbody id="userBody"><tr><td colspan="5" class="empty">Memuat...</td></tr></tbody></table>
-      </div>
-    </section>
-
-    <section id="pTx" class="hidden">
-      <div class="search-row"><input id="txSearch" placeholder="🔍 Cari ID transaksi / UID" oninput="renderTx()" style="flex:1"></div>
-      <div class="tbl-wrap">
-        <table><thead><tr><th>ID</th><th>UID</th><th>Tipe</th><th>Nominal</th><th>Harga</th><th>Qty</th><th>Status</th></tr></thead>
-        <tbody id="txBody"><tr><td colspan="7" class="empty">Memuat...</td></tr></tbody></table>
-      </div>
-    </section>
-
-    <section id="pMarket" class="hidden">
-      <div id="chartContainer"></div>
-      <div class="card">
-        <h3 style="font-size:.95rem;margin-bottom:12px">⚙️ Atur Harga CAZO</h3>
-        <div class="frow">
-          <label class="flabel">Harga Saat Ini (Rp)</label>
-          <input class="finput" id="cfgPrice" type="number" step="1" placeholder="500">
-        </div>
-        <button class="btn btn-primary" onclick="savePrice()">💾 Simpan Harga</button>
-        <p id="priceMsg" style="margin-top:10px;font-size:.8rem;color:var(--muted)"></p>
-      </div>
-      <div class="card">
-        <h3 style="font-size:.95rem;margin-bottom:12px">🔄 Reset Volume (Hati-hati)</h3>
-        <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Mereset volume beli/jual ke 0. Tidak menghapus transaksi.</p>
-        <button class="btn btn-danger" onclick="resetVolumes()">🔄 Reset Volume</button>
-      </div>
-    </section>
-
-    <section id="pLogs" class="hidden">
-      <div class="card" id="logList"><div class="empty">Memuat log...</div></div>
-    </section>
-  </main>
-</div>
-
-<div class="modal" id="depModal">
-  <div class="modal-card">
-    <h3>Detail Deposit</h3>
-    <div id="depModalBody"></div>
-    <div class="modal-actions" id="depModalActions"></div>
-  </div>
-</div>
-
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue, get, set, update, push, runTransaction, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import{getDatabase,ref,onValue,runTransaction}from"https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+const app=initializeApp({apiKey:"AIzaSyCHr0eemIkfHNFDUkSaFDklp_c1OgmSnl8",authDomain:"mybro-9ba5f.firebaseapp.com",databaseURL:"https://mybro-9ba5f-default-rtdb.firebaseio.com/",projectId:"mybro-9ba5f"});
+const db=getDatabase(app),au=getAuth(app),R=p=>ref(db,p);
+const ADMINS=["GANTI_EMAIL_ADMIN@gmail.com"];   // <- isi email Google admin
+const MIN_DEP=5e3;
+const $=i=>document.getElementById(i),f=(n,d=0)=>(+n).toLocaleString('id-ID',{maximumFractionDigits:d}),rp=n=>'Rp '+f(n);
+const dt=t=>new Date(t).toLocaleString('id-ID',{dateStyle:'short',timeStyle:'short'});
+const e=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const toast=t=>{const x=$('toast');x.textContent=t;x.style.display='block';clearTimeout(x.t);x.t=setTimeout(()=>x.style.display='none',2800)};
+let me,Q=[],UU=[],tab='dep';
+$('tb').onclick=ev=>{const b=ev.target.closest('button');if(!b)return;[...$('tb').children].forEach(x=>x.classList.toggle('on',x==b));tab=b.dataset.t;view()};
+$('gb').onclick=()=>signInWithPopup(au,new GoogleAuthProvider()).catch(x=>toast(x.message));
+$('out').onclick=()=>signOut(au).then(()=>location.reload());
 
-const cfg = {
-  apiKey:"AIzaSyCHr0eemIkfHNFDUkSaFDklp_c1OgmSnl8",
-  authDomain:"mybro-9ba5f.firebaseapp.com",
-  databaseURL:"https://mybro-9ba5f-default-rtdb.firebaseio.com/",
-  projectId:"mybro-9ba5f"
-};
-const app = initializeApp(cfg);
-const db = getDatabase(app);
-const auth = getAuth(app);
+function view(){
+ const pd=Q.filter(r=>r.type=='dep'&&r.status=='pending'),pw=Q.filter(r=>r.type=='wd'&&r.status=='pending'),sum=a=>a.reduce((s,r)=>s+r.amount,0);
+ $('st').innerHTML=`<div class="card"><span class="m">Deposit pending</span><b>${pd.length}</b><span class="m">${rp(sum(pd))}</span></div><div class="card"><span class="m">Withdraw pending</span><b>${pw.length}</b><span class="m">${rp(sum(pw))}</span></div><div class="card"><span class="m">User</span><b>${UU.length}</b><span class="m">Saldo: ${rp(UU.reduce((s,[,u])=>s+(u.idr||0),0))}</span></div>`;
+ if(tab=='us')return void($('list').innerHTML=`<div class="card">${UU.map(([,u])=>`<div class="li"><div>${e(u.name)}<br><span class="m">${e(u.email)}</span></div><div style="text-align:right">${rp(u.idr||0)}<br><span class="m">${f(u.cazo||0,4)} CAZO</span></div></div>`).join('')||'<p class="m">Belum ada user</p>'}</div>`);
+ const a=Q.filter(r=>r.type==tab).sort((x,y)=>(y.status=='pending')-(x.status=='pending')||y.ts-x.ts).slice(0,80);
+ $('list').innerHTML=a.map(r=>`<div class="card" style="${r.status=='pending'?'':'opacity:.6'}"><div class="row"><b>${e(r.name)}</b><span class="bd ${e(r.status)}">${e(r.status)}</span></div><div class="m">${e(r.email)} · ${dt(r.ts)}</div><h3 style="margin:6px 0">${rp(r.amount)}</h3><div class="m">${e(r.note)}</div>${r.status=='pending'?`<div class="row" style="margin-top:10px"><button class="btn b" data-a="1" data-u="${e(r.u)}" data-i="${e(r.i)}">Setujui</button><button class="btn s" data-a="0" data-u="${e(r.u)}" data-i="${e(r.i)}">Tolak</button></div>`:''}</div>`).join('')||'<p class="m">Belum ada pengajuan</p>';
+}
+$('list').onclick=async ev=>{const b=ev.target.closest('button[data-u]');if(!b)return;b.disabled=true;
+ const u=b.dataset.u,ok=b.dataset.a=='1';let r;
+ try{await runTransaction(R(`reqs/${u}/${b.dataset.i}`),x=>{if(!x||x.status!='pending'||(x.type=='dep'&&ok&&x.amount<MIN_DEP))return;r={...x};x.status=ok?'approved':'rejected';x.by=me.email;x.at=Date.now();return x});
+ if(!r)return toast('Sudah diproses / tidak valid');
+ if((r.type=='dep'&&ok)||(r.type=='wd'&&!ok))await runTransaction(R('users/'+u),x=>{if(!x)return;x.idr=(x.idr||0)+r.amount;return x});
+ toast(ok?'Disetujui':'Ditolak'+(r.type=='wd'?' · saldo dikembalikan':''))}
+ catch(x){toast(x.message)}finally{b.disabled=false}};
 
-const $ = id => document.getElementById(id);
-const fmtRp = n => 'Rp' + Math.round(Number(n)||0).toLocaleString('id-ID');
-const fmtNum = n => Number(n||0).toLocaleString('id-ID',{maximumFractionDigits:2});
-const fmtTime = t => t ? new Date(t).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
-
-let user = null, deposits = [], users = [], txs = [], wallets = {}, lastPublicTxs = [], chart, candleS;
-let loadedListeners = false;
-
-// =================================================================
-// ==== KUNCI PERBAIKAN #1: handle redirect result SEBELUM apa pun ====
-// =================================================================
-getRedirectResult(auth)
-  .then(res => {
-    if (res && res.user) {
-      console.log('[CAZO] Redirect login berhasil:', res.user.email);
-    }
-  })
-  .catch(err => {
-    console.error('[CAZO] Redirect error:', err);
-    const msg = $('gateMsg');
-    if (msg) {
-      msg.textContent = '❌ Login redirect gagal: ' + (err.code || '') + ' — ' + (err.message || '');
-      msg.classList.remove('info');
-    }
-  });
-
-// =================================================================
-// ==== KUNCI PERBAIKAN #2: login dengan fallback popup→redirect ====
-// =================================================================
-window.login = async () => {
-  const btn = $('loginBtn');
-  const msg = $('gateMsg');
-  msg.textContent = '⏳ Membuka Google sign-in...';
-  msg.className = 'gmsg info';
-  btn.disabled = true;
-  btn.textContent = 'Memproses...';
-
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-
-  try {
-    // Coba popup dulu (lebih cepat, mudah debug)
-    await signInWithPopup(auth, provider);
-    // Kalau sampai sini, popup berhasil → onAuthStateChanged akan fire
-    console.log('[CAZO] Popup login sukses');
-  } catch (e) {
-    console.warn('[CAZO] Popup gagal:', e.code, e.message);
-
-    // Fallback ke redirect untuk popup-blocked / cancelled / unsupported
-    const fallbackCodes = [
-      'auth/popup-blocked',
-      'auth/popup-closed-by-user',
-      'auth/cancelled-popup-request',
-      'auth/operation-not-supported-in-this-environment',
-      'auth/web-storage-unsupported'
-    ];
-    if (fallbackCodes.includes(e.code)) {
-      msg.textContent = '⏳ Mengalihkan ke halaman Google...';
-      try {
-        await signInWithRedirect(auth, provider);
-        return; // halaman akan reload
-      } catch (re) {
-        msg.textContent = '❌ ' + (re.code || '') + ': ' + (re.message || 'Redirect gagal');
-        btn.disabled = false;
-        btn.textContent = 'Masuk dengan Google';
-        return;
-      }
-    }
-
-    // Error lain — tampilkan jelas
-    let hint = '';
-    if (e.code === 'auth/unauthorized-domain') {
-      hint = ' (Domain belum terdaftar di Firebase Console → Authentication → Settings → Authorized domains)';
-    } else if (e.code === 'auth/operation-not-allowed') {
-      hint = ' (Google sign-in belum diaktifkan di Firebase Console → Authentication → Sign-in method)';
-    } else if (e.code === 'auth/invalid-api-key') {
-      hint = ' (API key Firebase salah)';
-    }
-    msg.textContent = '❌ ' + (e.code || 'Error') + ': ' + (e.message || '') + hint;
-    btn.disabled = false;
-    btn.textContent = 'Masuk dengan Google';
-  }
-};
-
-window.logout = () => signOut(auth);
-
-// =================================================================
-// ==== KUNCI PERBAIKAN #3: onAuthStateChanged + timeout fallback ====
-// =================================================================
-let authResolved = false;
-const authTimeout = setTimeout(() => {
-  if (!authResolved) {
-    console.warn('[CAZO] Auth state tidak settle setelah 15 detik');
-    const msg = $('gateMsg');
-    if (msg) {
-      msg.textContent = '⚠️ Firebase Auth tidak merespons. Cek koneksi internet atau buka Console (F12).';
-      msg.classList.remove('info');
-    }
-  }
-}, 15000);
-
-onAuthStateChanged(auth, u => {
-  authResolved = true;
-  clearTimeout(authTimeout);
-  console.log('[CAZO] onAuthStateChanged:', u ? 'LOGIN ' + u.email : 'LOGOUT');
-
-  if (!u) {
-    user = null;
-    $('gate').style.display = 'flex';
-    $('layout').classList.remove('show');
-    const btn = $('loginBtn');
-    btn.disabled = false;
-    btn.textContent = 'Masuk dengan Google';
-    return;
-  }
-
-  user = u;
-  $('gate').style.display = 'none';
-  $('layout').classList.add('show');
-  $('adminInfo').textContent = u.email || u.uid.slice(0, 12);
-
-  if (!loadedListeners) {
-    loadedListeners = true;
-    loadAll();
-  }
+onAuthStateChanged(au,u=>{
+ if(!u)return $('lg').classList.remove('hide');
+ if(!ADMINS.includes(u.email)){toast('Akun ini bukan admin');return void signOut(au)}
+ me=u;$('lg').classList.add('hide');$('app').classList.remove('hide');
+ onValue(R('reqs'),s=>{Q=[];const v=s.val()||{};for(const a in v)for(const i in v[a])Q.push({u:a,i,...v[a][i]});view()});
+ onValue(R('users'),s=>{UU=Object.entries(s.val()||{});view()});
 });
-
-// =================================================================
-// ==== Fungsi-fungsi panel admin ====
-// =================================================================
-async function writeLog(action, targetId, extra = {}) {
-  const logRef = push(ref(db, 'adminLogs'));
-  await set(logRef, {
-    adminUid: user.uid,
-    action,
-    targetId,
-    createdAt: Date.now(),
-    ...extra
-  });
-}
-
-window.showPanel = p => {
-  ['dash','deposits','users','tx','market','logs'].forEach(x=>$('p'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('hidden', x!==p));
-  document.querySelectorAll('.sb-btn[data-p]').forEach(b=>b.classList.toggle('active', b.dataset.p===p));
-  $('panelTitle').textContent = {dash:'Dashboard',deposits:'Verifikasi Deposit',users:'Pengguna',tx:'Transaksi',market:'Pengaturan Pasar',logs:'Log Admin'}[p];
-};
-
-function loadAll(){
-  onValue(ref(db,'market/cazo'), s=>{
-    const d = s.val()||{};
-    $('sPrice').textContent = fmtRp(d.price||500);
-    $('cfgPrice').value = d.price || 500;
-    renderChart();
-  }, err => {
-    $('health').innerHTML = '❌ <b style="color:var(--danger)">Error:</b> ' + err.message;
-  });
-  $('health').innerHTML = '✅ <b style="color:var(--neon)">Terhubung</b> ke Firebase Realtime Database.';
-
-  onValue(query(ref(db,'deposits'), orderByChild('createdAt'), limitToLast(200)), s=>{
-    deposits = []; s.forEach(c=>deposits.push({id:c.key,...c.val()}));
-    deposits.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-    $('sPending').textContent = deposits.filter(d=>d.status==='pending').length;
-    renderDeposits();
-  }, err => console.error('deposits:', err));
-
-  onValue(ref(db,'users'), s=>{
-    users = []; s.forEach(c=>users.push({uid:c.key,...c.val()}));
-    $('sUsers').textContent = users.length;
-    renderUsers();
-  }, err => console.error('users:', err));
-
-  onValue(ref(db,'wallets'), s=>{ wallets = s.val()||{}; renderUsers(); }, err => console.error('wallets:', err));
-
-  onValue(query(ref(db,'transactions'), orderByChild('createdAt'), limitToLast(200)), s=>{
-    txs = []; s.forEach(c=>txs.push({id:c.key,...c.val()}));
-    txs.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-    $('sTx').textContent = txs.length;
-    renderTx();
-  }, err => console.error('transactions:', err));
-
-  onValue(query(ref(db,'adminLogs'), orderByChild('createdAt'), limitToLast(50)), s=>{
-    const logs=[]; s.forEach(c=>logs.push({id:c.key,...c.val()}));
-    logs.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-    $('logList').innerHTML = logs.length
-      ? logs.map(l=>`<div class="logitem"><span><strong>${l.action}</strong> · target <code class="mono">${(l.targetId||'—').slice(0,12)}</code></span><span>${fmtTime(l.createdAt)}</span></div>`).join('')
-      : '<div class="empty">Belum ada log</div>';
-  }, err => console.error('logs:', err));
-
-  onValue(query(ref(db,'publicTransactions'), orderByChild('createdAt'), limitToLast(500)), s=>{
-    lastPublicTxs = []; s.forEach(c=>lastPublicTxs.push(c.val()));
-    lastPublicTxs.sort((a,b)=>a.createdAt-b.createdAt);
-    renderChart();
-  }, err => console.error('publicTx:', err));
-}
-
-function renderChart(){
-  if (!chart){
-    chart = LightweightCharts.createChart($('chartContainer'),{
-      layout:{background:{color:'#0a0f0d'},textColor:'#657a72',fontFamily:'Inter'},
-      grid:{vertLines:{color:'#1a2521'},horzLines:{color:'#1a2521'}},
-      rightPriceScale:{borderColor:'#1a2521'},
-      timeScale:{borderColor:'#1a2521',timeVisible:true},
-    });
-    candleS = chart.addCandlestickSeries({upColor:'#00ff9d',downColor:'#ff4d6d',borderUpColor:'#00ff9d',borderDownColor:'#ff4d6d',wickUpColor:'#00ff9d',wickDownColor:'#ff4d6d'});
-    new ResizeObserver(()=>chart.applyOptions({width:$('chartContainer').clientWidth,height:$('chartContainer').clientHeight})).observe($('chartContainer'));
-  }
-  if (!lastPublicTxs.length) return;
-  const b = {};
-  lastPublicTxs.forEach(t=>{
-    if(!t.createdAt||!t.unitPrice) return;
-    const k = Math.floor(t.createdAt/300000)*300000;
-    if(!b[k]) b[k] = {time:k/1000,open:t.unitPrice,high:t.unitPrice,low:t.unitPrice,close:t.unitPrice};
-    b[k].high = Math.max(b[k].high,t.unitPrice);
-    b[k].low = Math.min(b[k].low,t.unitPrice);
-    b[k].close = t.unitPrice;
-  });
-  candleS.setData(Object.values(b).sort((a,b)=>a.time-b.time));
-  chart.timeScale().fitContent();
-}
-
-window.renderDeposits = () => {
-  const q = ($('depSearch').value||'').toLowerCase();
-  const f = $('depFilter').value;
-  const list = deposits.filter(d=>
-    (!f || d.status===f) &&
-    (!q || (d.reference||'').toLowerCase().includes(q) || (d.uid||'').toLowerCase().includes(q) || String(d.amount||'').includes(q))
-  );
-  $('depBody').innerHTML = list.length
-    ? list.map(d=>`<tr>
-        <td><code class="mono">${d.reference||d.id}</code></td>
-        <td><code class="mono">${(d.uid||'').slice(0,10)}…</code></td>
-        <td><b>${fmtRp(d.amount)}</b></td>
-        <td style="color:var(--muted);font-size:.75rem">${fmtTime(d.createdAt)}</td>
-        <td><span class="badge ${d.status}">${d.status}</span></td>
-        <td>
-          <button class="btn btn-ghost btn-sm" onclick="viewDeposit('${d.id}')">Detail</button>
-          ${d.status==='pending'?`
-            <button class="btn btn-primary btn-sm" onclick="approveDeposit('${d.id}')">✓</button>
-            <button class="btn btn-danger btn-sm" onclick="rejectDeposit('${d.id}')">✗</button>`:''}
-        </td>
-      </tr>`).join('')
-    : '<tr><td colspan="6" class="empty">Tidak ada deposit</td></tr>';
-};
-
-window.viewDeposit = id => {
-  const d = deposits.find(x=>x.id===id);
-  if (!d) return;
-  $('depModalBody').innerHTML = `
-    <div style="font-size:.85rem;line-height:1.9">
-      <div><b>Referensi:</b> <code class="mono">${d.reference||d.id}</code></div>
-      <div><b>UID:</b> <code class="mono">${d.uid}</code></div>
-      <div><b>Nominal:</b> ${fmtRp(d.amount)}</div>
-      <div><b>Status:</b> <span class="badge ${d.status}">${d.status}</span></div>
-      <div><b>Dibuat:</b> ${fmtTime(d.createdAt)}</div>
-      ${d.reviewedAt?`<div><b>Ditinjau:</b> ${fmtTime(d.reviewedAt)}</div>`:''}
-      ${d.reviewedBy?`<div><b>Oleh:</b> <code class="mono">${d.reviewedBy.slice(0,10)}…</code></div>`:''}
-      ${d.rejectReason?`<div><b>Alasan tolak:</b> ${d.rejectReason}</div>`:''}
-    </div>`;
-  $('depModalActions').innerHTML = `
-    <button class="btn btn-ghost" onclick="closeDep()">Tutup</button>
-    ${d.status==='pending'?`
-      <button class="btn btn-primary" onclick="approveDeposit('${d.id}');closeDep()">✓ Setujui</button>
-      <button class="btn btn-danger" onclick="rejectDeposit('${d.id}');closeDep()">✗ Tolak</button>`:''}
-  `;
-  $('depModal').classList.add('open');
-};
-window.closeDep = () => $('depModal').classList.remove('open');
-
-window.approveDeposit = async id => {
-  if (!confirm('Setujui deposit ini? Saldo akan dikreditkan TEPAT SATU KALI.')) return;
-  const dep = deposits.find(d=>d.id===id);
-  if (!dep) return alert('Deposit tidak ditemukan.');
-
-  try {
-    const statusRes = await runTransaction(ref(db, `deposits/${id}/status`), s => {
-      if (s !== 'pending') return;
-      return 'approved';
-    });
-    if (!statusRes.committed) throw new Error('Deposit sudah diproses sebelumnya.');
-
-    const walletRes = await runTransaction(ref(db, `wallets/${dep.uid}`), w => {
-      w = w || { rupiahBalance: 0, cazoBalance: 0 };
-      w.rupiahBalance = Number(w.rupiahBalance || 0) + Number(dep.amount);
-      w.lastTrade = {
-        type: 'admin_credit',
-        amount: Number(dep.amount),
-        unitPrice: 0,
-        quantity: 0,
-        txId: id,
-        at: Date.now()
-      };
-      return w;
-    });
-    if (!walletRes.committed) {
-      await set(ref(db, `deposits/${id}/status`), 'pending');
-      throw new Error('Gagal kredit saldo — status dikembalikan ke pending.');
-    }
-
-    await update(ref(db, `deposits/${id}`), {
-      reviewedAt: Date.now(),
-      reviewedBy: user.uid
-    });
-
-    await writeLog('deposit_approve', id, { amount: dep.amount, targetUid: dep.uid });
-
-    alert('✅ Deposit disetujui.');
-  } catch(e){
-    alert('❌ Gagal: ' + e.message);
-  }
-};
-
-window.rejectDeposit = async id => {
-  const reason = prompt('Alasan penolakan (wajib, min 3 karakter):');
-  if (!reason || reason.trim().length < 3) return alert('Alasan wajib diisi.');
-  try {
-    const res = await runTransaction(ref(db, `deposits/${id}/status`), s => {
-      if (s !== 'pending') return;
-      return 'rejected';
-    });
-    if (!res.committed) throw new Error('Deposit sudah diproses.');
-    await update(ref(db, `deposits/${id}`), {
-      reviewedAt: Date.now(),
-      reviewedBy: user.uid,
-      rejectReason: reason.trim()
-    });
-    await writeLog('deposit_reject', id, { reason: reason.trim() });
-    alert('✅ Deposit ditolak.');
-  } catch(e){ alert('❌ Gagal: ' + e.message); }
-};
-
-window.renderUsers = () => {
-  const q = ($('userSearch').value||'').toLowerCase();
-  const list = users.filter(u => !q || (u.uid||'').toLowerCase().includes(q) || (u.displayName||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
-  $('userBody').innerHTML = list.length
-    ? list.map(u=>{
-      const w = wallets[u.uid]||{};
-      return `<tr>
-        <td><code class="mono">${u.uid.slice(0,12)}…</code></td>
-        <td>${u.displayName||'—'}</td>
-        <td style="color:var(--muted);font-size:.75rem">${u.email||'—'}</td>
-        <td><b>${fmtRp(w.rupiahBalance||0)}</b></td>
-        <td>${fmtNum(w.cazoBalance||0)}</td>
-      </tr>`;
-    }).join('')
-    : '<tr><td colspan="5" class="empty">Tidak ada pengguna</td></tr>';
-};
-
-window.renderTx = () => {
-  const q = ($('txSearch').value||'').toLowerCase();
-  const list = txs.filter(t => !q || (t.id||'').toLowerCase().includes(q) || (t.uid||'').toLowerCase().includes(q));
-  $('txBody').innerHTML = list.length
-    ? list.map(t=>`<tr>
-        <td><code class="mono">${(t.id||'').slice(0,10)}…</code></td>
-        <td><code class="mono">${(t.uid||'').slice(0,8)}…</code></td>
-        <td>${t.type==='buy'?'🟢 Beli':'🔴 Jual'}</td>
-        <td><b>${fmtRp(t.amount)}</b></td>
-        <td>${fmtRp(t.unitPrice)}</td>
-        <td>${fmtNum(t.quantity)}</td>
-        <td><span class="badge ${t.status==='success'?'success':t.status}">${t.status||'—'}</span></td>
-      </tr>`).join('')
-    : '<tr><td colspan="7" class="empty">Tidak ada transaksi</td></tr>';
-};
-
-window.savePrice = async () => {
-  const price = parseFloat($('cfgPrice').value);
-  if (!Number.isFinite(price) || price <= 0){
-    $('priceMsg').textContent='❌ Harga tidak valid';
-    $('priceMsg').style.color='var(--danger)';
-    return;
-  }
-  if (!confirm('Ubah harga CAZO menjadi ' + fmtRp(price) + '?')) return;
-  try {
-    await update(ref(db, 'market/cazo'), { price, lastUpdated: Date.now() });
-    await writeLog('update_price', 'market/cazo', { newValue: price });
-    $('priceMsg').textContent='✅ Harga diperbarui';
-    $('priceMsg').style.color='var(--neon)';
-  } catch(e){
-    $('priceMsg').textContent='❌ '+e.message;
-    $('priceMsg').style.color='var(--danger)';
-  }
-};
-
-window.resetVolumes = async () => {
-  if (!confirm('Reset volume beli & jual ke 0? Transaksi tidak dihapus.')) return;
-  try {
-    await update(ref(db, 'market/cazo'), { buyVolume: 0, sellVolume: 0, lastUpdated: Date.now() });
-    await writeLog('reset_volumes', 'market/cazo');
-    alert('✅ Volume direset.');
-  } catch(e){ alert('❌ ' + e.message); }
-};
-</script>
-</body>
-</html>
+</script></body></html>
