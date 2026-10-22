@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cazo – Dompet Digital</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f5f4;--card:#fff;--ink:#10201f;--mut:#667877;--line:#dfe7e5;--teal:#0e4d4a;--gold:#ffc233;--red:#d2453c;--grn:#13875a;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1514;--card:#13211f;--ink:#eaf3f1;--mut:#8aa09d;--line:#233633;--red:#ff7b70;--grn:#4fd39a;color-scheme:dark}}
+*{box-sizing:border-box;margin:0}
+html,body{background:var(--bg);color:var(--ink);font:400 15px/1.5 Sora,system-ui,sans-serif}
+body{max-width:440px;margin:auto;min-height:100%;padding:env(safe-area-inset-top,0) 18px calc(env(safe-area-inset-bottom,0px) + 24px)}
+button,input{font:inherit;color:inherit}
+h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.mut{color:var(--mut);font-size:13px}
+.top{display:flex;justify-content:space-between;align-items:center;padding:18px 0 14px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px}
+.coin{width:34px;height:34px;border-radius:50%;background:var(--gold);color:var(--teal);display:grid;place-items:center;font-weight:800}
+.bal{position:relative;overflow:hidden;background:var(--teal);color:#fff;border-radius:26px;padding:24px 22px 22px}
+.bal::after{content:"C";position:absolute;right:-26px;top:-34px;width:170px;height:170px;border-radius:50%;background:var(--gold);color:var(--teal);font:800 110px/170px Sora;text-align:center;opacity:.95}
+.bal .mut{color:#a9d0cb;position:relative;z-index:1}
+.amt{font-size:34px;font-weight:800;letter-spacing:-.03em;margin:6px 0 14px;position:relative;z-index:1}
+.eye{background:none;border:0;color:#cfe6e2;padding:0;font-size:13px;position:relative;z-index:1;cursor:pointer}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 22px}
+.btn{border:0;border-radius:16px;padding:14px;font-weight:600;cursor:pointer;background:var(--gold);color:#10201f;width:100%}
+.btn.alt{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+h2{font-size:16px;font-weight:600;margin-bottom:6px}
+.tx{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
+.ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:600;background:var(--card);border:1px solid var(--line);flex:none}
+.tx .m{flex:1;min-width:0}.tx b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.in{color:var(--grn);font-weight:600}.out{color:var(--red);font-weight:600}
+.empty{padding:28px 0;text-align:center}
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+input{width:100%;padding:13px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--card)}
+.tabs{display:flex;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin:18px 0 6px}
+.tabs button{flex:1;border:0;background:none;padding:10px;border-radius:10px;font-weight:600;cursor:pointer;color:var(--mut)}
+.tabs button.on{background:var(--teal);color:#fff}
+.hero{padding:38px 0 8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.chips button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;cursor:pointer}
+.sheet{position:fixed;inset:0;background:rgba(5,15,14,.55);display:flex;align-items:flex-end;justify-content:center;z-index:5}
+.sheet[hidden]{display:none}
+.panel{background:var(--bg);width:100%;max-width:440px;border-radius:26px 26px 0 0;padding:22px 18px calc(env(safe-area-inset-bottom,0px) + 22px);animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+@media(prefers-reduced-motion:reduce){.panel{animation:none}}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:999px;font-size:14px;z-index:9;max-width:90%;text-align:center}
+#toast:empty{display:none}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="sheet" id="sheet" hidden><div class="panel" id="panel"></div></div>
+<div id="toast" role="status"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, push, onValue, get, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+// 1. Inisialisasi Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyCHr0eemIkfHNFDUkSaFDklp_c1OgmSnl8",
+    authDomain: "mybro-9ba5f.firebaseapp.com",
+    databaseURL: "https://mybro-9ba5f-default-rtdb.firebaseio.com/",
+    projectId: "mybro-9ba5f"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ---------- Helper ----------
+const $ = s => document.querySelector(s);
+const rp = n => 'Rp' + Number(n || 0).toLocaleString('id-ID');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+const norm = p => { p = String(p).replace(/\D/g, ''); return p.startsWith('62') ? '0' + p.slice(2) : p; };
+const hash = async s => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('cazo:' + s)))].map(b => b.toString(16).padStart(2, '0')).join('');
+let tt; const toast = m => { const t = $('#toast'); t.textContent = m; clearTimeout(tt); tt = setTimeout(() => t.textContent = '', 3200); };
+const sheet = html => { $('#panel').innerHTML = html; $('#sheet').hidden = false; $('#panel input')?.focus(); };
+const close = () => $('#sheet').hidden = true;
+
+// ---------- State ----------
+let me = localStorage.getItem('cazo_me'), user = null, txs = [], hide = false, mode = 'login', unsub = [];
+
+function start() {
+  unsub.forEach(f => f()); unsub = []; user = null; txs = [];
+  if (me) {
+    unsub.push(onValue(ref(db, 'users/' + me), s => { user = s.val(); if (!user) return logout(); render(); }));
+    unsub.push(onValue(ref(db, 'transactions/' + me), s => {
+      txs = Object.values(s.val() || {}).sort((a, b) => b.ts - a.ts).slice(0, 30); render();
+    }));
+  }
+  render();
+}
+function logout() { localStorage.removeItem('cazo_me'); me = null; close(); start(); }
+
+// ---------- Tampilan ----------
+function render() {
+  const el = $('#app');
+  if (!me) {
+    el.innerHTML = `<div class="hero"><div class="logo"><span class="coin">C</span>Cazo</div>
+      <h1 style="margin-top:28px">Dompet digital untuk semua transaksimu</h1>
+      <p class="mut" style="margin-top:8px">Kirim uang ke teman dan isi saldo kapan saja.</p></div>
+      <div class="tabs"><button data-a="tab" data-m="login" class="${mode == 'login' ? 'on' : ''}">Masuk</button><button data-a="tab" data-m="reg" class="${mode == 'reg' ? 'on' : ''}">Daftar</button></div>
+      ${mode == 'reg' ? '<label for="n">Nama lengkap</label><input id="n" autocomplete="name">' : ''}
+      <label for="p">Nomor HP</label><input id="p" type="tel" inputmode="numeric" placeholder="08123456789" autocomplete="tel">
+      <label for="k">PIN 6 angka</label><input id="k" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
+      <button class="btn" data-a="auth" style="margin-top:22px">${mode == 'reg' ? 'Buat akun Cazo' : 'Masuk'}</button>`;
+    return;
+  }
+  if (!user) { el.innerHTML = '<p class="mut empty">Memuat dompetmu…</p>'; return; }
+  el.innerHTML = `<div class="top"><div class="logo"><span class="coin">C</span>Cazo</div><button class="eye" style="color:var(--mut)" data-a="logout">Keluar</button></div>
+    <div class="bal"><div class="mut">Halo, ${esc(user.name)}</div><div class="amt">${hide ? 'Rp••••••' : rp(user.balance)}</div>
+      <button class="eye" data-a="eye">${hide ? 'Tampilkan saldo' : 'Sembunyikan saldo'}</button></div>
+    <div class="acts"><button class="btn" data-a="topup">Isi saldo</button><button class="btn alt" data-a="send">Kirim uang</button></div>
+    <h2>Riwayat transaksi</h2>
+    ${txs.length ? txs.map(t => {
+      const plus = t.type != 'out', label = t.type == 'topup' ? 'Isi saldo' : (plus ? 'Dari ' : 'Ke ') + esc(t.peer);
+      const d = new Date(t.ts).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      return `<div class="tx"><span class="ico">${plus ? '+' : '−'}</span><div class="m"><b>${label}</b><span class="mut">${d}${t.note ? ' · ' + esc(t.note) : ''}</span></div><span class="${plus ? 'in' : 'out'}">${plus ? '+' : '−'}${rp(t.amount)}</span></div>`;
+    }).join('') : '<p class="mut empty">Belum ada transaksi. Isi saldo untuk memulai.</p>'}`;
+}
+
+// ---------- Aksi ----------
+const acts = {
+  tab: b => { mode = b.dataset.m; render(); },
+  eye: () => { hide = !hide; render(); },
+  logout,
+  close,
+  chip: b => { $('#a').value = b.dataset.v; },
+  topup: () => sheet(`<h2>Isi saldo</h2><p class="mut">Simulasi top-up untuk uji coba.</p>
+    <label for="a">Nominal</label><input id="a" type="number" inputmode="numeric" placeholder="50000">
+    <div class="chips">${[20000, 50000, 100000, 500000].map(v => `<button data-a="chip" data-v="${v}">${rp(v)}</button>`).join('')}</div>
+    <button class="btn" data-a="dotopup" style="margin-top:20px">Isi saldo</button>`),
+  send: () => sheet(`<h2>Kirim uang</h2>
+    <label for="t">Nomor HP tujuan</label><input id="t" type="tel" inputmode="numeric">
+    <label for="a">Nominal</label><input id="a" type="number" inputmode="numeric">
+    <label for="c">Catatan (opsional)</label><input id="c" maxlength="40">
+    <label for="k">PIN kamu</label><input id="k" type="password" inputmode="numeric" maxlength="6">
+    <button class="btn" data-a="dosend" style="margin-top:20px">Kirim sekarang</button>`),
+  async auth(b) {
+    const phone = norm($('#p').value), pin = $('#k').value;
+    if (phone.length < 9) return toast('Nomor HP tidak valid');
+    if (!/^\d{6}$/.test(pin)) return toast('PIN harus 6 angka');
+    b.disabled = true;
+    try {
+      const snap = await get(ref(db, 'users/' + phone)), h = await hash(pin);
+      if (mode == 'reg') {
+        const name = $('#n').value.trim();
+        if (!name) throw 'Nama wajib diisi';
+        if (snap.exists()) throw 'Nomor sudah terdaftar. Silakan masuk';
+        await set(ref(db, 'users/' + phone), { name, pin: h, balance: 0, createdAt: serverTimestamp() });
+      } else if (!snap.exists() || snap.val().pin !== h) throw 'Nomor HP atau PIN salah';
+      me = phone; localStorage.setItem('cazo_me', me); start();
+    } catch (e) { toast(typeof e == 'string' ? e : 'Gagal terhubung. Coba lagi'); b.disabled = false; }
+  },
+  async dotopup(b) {
+    const amt = Math.floor(+$('#a').value);
+    if (!(amt >= 10000)) return toast('Minimal isi saldo Rp10.000');
+    b.disabled = true;
+    try {
+      await runTransaction(ref(db, 'users/' + me + '/balance'), v => (v || 0) + amt);
+      await push(ref(db, 'transactions/' + me), { type: 'topup', amount: amt, ts: serverTimestamp() });
+      close(); toast('Saldo bertambah ' + rp(amt));
+    } catch { toast('Isi saldo gagal. Coba lagi'); b.disabled = false; }
+  },
+  async dosend(b) {
+    const to = norm($('#t').value), amt = Math.floor(+$('#a').value), note = $('#c').value.trim(), pin = $('#k').value;
+    if (!to || to == me) return toast('Nomor tujuan tidak valid');
+    if (!(amt >= 1000)) return toast('Minimal kirim Rp1.000');
+    b.disabled = true;
+    try {
+      if (await hash(pin) !== user.pin) throw 'PIN salah';
+      const rs = await get(ref(db, 'users/' + to));
+      if (!rs.exists()) throw 'Nomor tujuan belum terdaftar di Cazo';
+      const r = await runTransaction(ref(db, 'users/' + me + '/balance'), v => v === null ? 0 : (v >= amt ? v - amt : undefined));
+      if (!r.committed) throw 'Saldo tidak cukup';
+      await runTransaction(ref(db, 'users/' + to + '/balance'), v => (v || 0) + amt);
+      const ts = serverTimestamp();
+      await Promise.all([
+        push(ref(db, 'transactions/' + me), { type: 'out', amount: amt, peer: rs.val().name, phone: to, note, ts }),
+        push(ref(db, 'transactions/' + to), { type: 'in', amount: amt, peer: user.name, phone: me, note, ts })
+      ]);
+      close(); toast(rp(amt) + ' terkirim ke ' + rs.val().name);
+    } catch (e) { toast(typeof e == 'string' ? e : 'Transfer gagal. Coba lagi'); b.disabled = false; }
+  }
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (b) acts[b.dataset.a]?.(b);
+  else if (e.target.id == 'sheet') close();
+});
+start();
+</script>
+</body>
+</html>
